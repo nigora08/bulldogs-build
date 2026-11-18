@@ -17,7 +17,7 @@ export const explainPassage = createServerFn({ method: "POST" })
     if (!apiKey) return { ok: true as const, text: fallback, source: "notes" as const };
 
     const prompt = [
-      "You help a Yale student read a fabrication plan. Answer in plain everyday words, in under 130 words.",
+      "You help an engineering student read a fabrication plan. Answer in plain everyday words, in under 130 words.",
       "If they asked a question, answer it. Otherwise explain the highlighted passage.",
       "Do not invent machine models, prices, training names, or hours that are not in the context.",
       "Never say a design is waterproof, structurally sound, or safe. Say what must be confirmed with the shop.",

@@ -15,11 +15,12 @@ import {
   Wind,
 } from "lucide-react";
 import { ADVISORIES, EQUIPMENT, FACILITIES, getEquipment, type AccessTier, type Equipment, type Verification } from "@/data/equipment";
+import { OPEN_PROCESSES } from "@/data/open-processes";
 import { explainPassage } from "@/lib/ask.functions";
 import { plainify, simplifyBrief } from "@/lib/plain";
 import { pickSuggestion, type Suggestion } from "@/lib/suggestions";
+import { analyzeForCampus, type Campus } from "@/lib/open-shop";
 import {
-  analyze,
   EXAMPLES,
   MORE_BRIEFS,
   lineCost,
@@ -92,7 +93,23 @@ function verifyClass(status: Verification): string {
   return "bg-warn-bg text-warn";
 }
 
-export function MakerMap() {
+export function MakerMap({
+  campus = "yale",
+  framed = false,
+  consumeDraft = false,
+  onCampusChange,
+  onSave,
+  saving = false,
+  saveNote = "",
+}: {
+  campus?: Campus;
+  framed?: boolean;
+  consumeDraft?: boolean;
+  onCampusChange?: (campus: Campus) => void;
+  onSave?: (input: { brief: string; constraints: Constraints; routeId: string | null; doneStepIds: string[] }) => void;
+  saving?: boolean;
+  saveNote?: string;
+}) {
   const [brief, setBrief] = useState(EXAMPLES[0].brief);
   const [constraints, setConstraints] = useState<Constraints>({ ...EXAMPLES[0].constraints, budget: 100 });
   const [submitted, setSubmitted] = useState<string | null>(null);
@@ -131,10 +148,10 @@ export function MakerMap() {
 
   useEffect(() => {
     if (!submitted) return;
-    const next = analyze(submitted, constraints);
+    const next = analyzeForCampus(submitted, constraints, campus);
     setBlueprint(next);
     setMethodId((current) => (current && next.routes.some((route) => route.id === current) ? current : next.routes[0]?.id ?? null));
-  }, [constraints, submitted]);
+  }, [campus, constraints, submitted]);
 
   function remember(next: Record<string, boolean>) {
     setDone(next);
@@ -165,7 +182,7 @@ export function MakerMap() {
     setBrief(clean);
     setBusy(true);
     const go = () => {
-      const next = analyze(clean, nextConstraints);
+      const next = analyzeForCampus(clean, nextConstraints, campus);
       setSubmitted(clean);
       setBlueprint(next);
       setMethodId(next.routes[0]?.id ?? null);
@@ -192,8 +209,28 @@ export function MakerMap() {
     });
   }
 
+  const draftOnce = useRef(false);
+  useEffect(() => {
+    if (!consumeDraft || draftOnce.current) return;
+    draftOnce.current = true;
+    try {
+      const raw = sessionStorage.getItem("datum-draft");
+      if (!raw) return;
+      sessionStorage.removeItem("datum-draft");
+      const parsed = JSON.parse(raw) as { brief?: string };
+      if (!parsed.brief || parsed.brief.trim().length < 12) return;
+      run(parsed.brief, constraints);
+    } catch {
+      /* ignore a bad draft */
+    }
+  }, [consumeDraft, constraints]);
+
   const askContext = useMemo(() => {
-    if (!blueprint || !selected) return "No fabrication plan yet. Bulldogs Build compares CEID, Wright Lab, architecture labs, and research cores.";
+    if (!blueprint || !selected) {
+      return campus === "yale"
+        ? "No fabrication plan yet. Bulldogs Build compares CEID, Wright Lab, architecture labs, and research cores."
+        : "No fabrication plan yet. Open shop ranks processes for a typical makerspace and does not know this campus's machines.";
+    }
     const bits = [
       `Project: ${blueprint.title}`,
       `Route: ${selected.name}. ${selected.why}`,
@@ -201,7 +238,7 @@ export function MakerMap() {
       `Risks: ${selected.risks.map((risk) => risk.title).join("; ")}`,
     ];
     return (plain ? bits.map(plainify) : bits).join("\n");
-  }, [blueprint, plain, selected]);
+  }, [blueprint, campus, plain, selected]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -221,15 +258,25 @@ export function MakerMap() {
       <a href="#brief" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-card focus:px-3 focus:py-2">
         Skip to the project brief
       </a>
-      <header className="no-print sticky top-0 z-30 border-b-4 border-gold bg-yale text-paper shadow-[0_12px_40px_-24px_rgba(4,24,46,0.8)]">
+      <header className={`no-print border-b-4 border-gold text-paper shadow-[0_12px_40px_-24px_rgba(4,24,46,0.8)] ${framed ? "relative" : "sticky top-0 z-30"} ${campus === "yale" ? "bg-yale" : "bg-ink"}`}>
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <button type="button" onClick={() => setTab("brief")} className="flex items-center gap-3">
-            <Badge alt="Handsome Dan on a Bulldogs Build medal" />
-            <span className="leading-none text-left">
-              <span className="block font-mono text-[10px] tracking-[0.28em] text-paper">YALE</span>
-              <span className="mt-1 block font-display text-xl leading-none text-paper">Bulldogs Build</span>
+          <button type="button" onClick={() => setTab("brief")} className="flex items-center gap-3 text-left">
+            {campus === "yale" ? <Badge alt="Handsome Dan on a Bulldogs Build medal" /> : null}
+            <span className="leading-none">
+              <span className="block font-mono text-[10px] tracking-[0.28em] text-paper">{campus === "yale" ? "YALE PACK" : "OPEN SHOP"}</span>
+              <span className="mt-1 block font-display text-xl leading-none text-paper">{campus === "yale" ? "Bulldogs Build" : "Any makerspace"}</span>
             </span>
           </button>
+          {onCampusChange ? (
+            <div className="flex gap-1 text-sm" role="group" aria-label="Campus pack">
+              <button type="button" aria-pressed={campus === "open"} onClick={() => onCampusChange("open")} className={`h-11 px-3 ${campus === "open" ? "bg-paper text-ink" : "text-paper"}`}>
+                Any shop
+              </button>
+              <button type="button" aria-pressed={campus === "yale"} onClick={() => onCampusChange("yale")} className={`h-11 px-3 ${campus === "yale" ? "bg-paper text-ink" : "text-paper"}`}>
+                Yale
+              </button>
+            </div>
+          ) : null}
           <nav className="flex flex-wrap gap-1 text-sm" aria-label="Sections">
             {TABS.map(([id, label]) => (
               <button
@@ -237,7 +284,7 @@ export function MakerMap() {
                 type="button"
                 aria-current={tab === id ? "page" : undefined}
                 onClick={() => setTab(id)}
-                className={`h-11 rounded-md px-3 ${tab === id ? "bg-paper text-yale" : "text-paper hover:bg-yale-ink"}`}
+                className={`h-11 rounded-md px-3 ${tab === id ? "bg-paper text-ink" : "text-paper hover:bg-black/20"}`}
               >
                 {label}
               </button>
@@ -252,14 +299,18 @@ export function MakerMap() {
           <div className="hero-wash pointer-events-none absolute inset-0" aria-hidden="true" />
           <div className="relative mx-auto grid max-w-6xl gap-10 px-4 py-14 lg:grid-cols-[1.15fr_0.85fr] lg:py-20">
             <div>
-              <p className="font-mono text-xs tracking-[0.18em] text-cyan">CEID · WRIGHT LAB · YSOA · SEAS CORES</p>
-              <h1 className="mt-4 max-w-xl font-display text-5xl leading-[1.02] text-yale sm:text-6xl">
-                Your idea.
-                <span className="mt-1 block text-[#8a6a2f]">Yale's tools.</span>
+              <p className="font-mono text-xs tracking-[0.18em] text-cyan">
+                {campus === "yale" ? "CEID · WRIGHT LAB · YSOA · SEAS CORES" : "FDM · LASER · MILL · BOARD HOUSE"}
+              </p>
+              <h1 className="mt-4 max-w-xl font-display text-5xl leading-[1.02] text-ink sm:text-6xl">
+                {campus === "yale" ? "Your idea." : "Your idea."}
+                <span className="mt-1 block text-[#8a6a2f]">{campus === "yale" ? "Yale's tools." : "A process you can run."}</span>
                 A plan to build it.
               </h1>
               <p className="mt-5 max-w-lg text-lg text-muted">
-                Discover where, how, and with what to make your next engineering project at Yale.
+                {campus === "yale"
+                  ? "Discover where, how, and with what to make the project at Yale. Save it when the route is the one you will actually build."
+                  : "Rank a process for a shop that is not Yale. The plan names what to ask for. It does not pretend to know your lab's machines."}
               </p>
               <dl className="mt-8 grid grid-cols-3 gap-3 max-w-lg">
                 {[
@@ -366,17 +417,36 @@ export function MakerMap() {
                 <p className="no-print mt-2 max-w-xl text-sm text-muted">Highlight a sentence in the plan or in your brief, then choose Explain or Ask.</p>
               </div>
               {blueprint ? (
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="no-print inline-flex h-11 items-center gap-2 border border-yale px-4 text-sm text-yale"
-                >
-                  <Printer className="h-4 w-4" aria-hidden="true" />
-                  Export / print
-                </button>
+                <div className="no-print flex flex-wrap gap-2">
+                  {onSave ? (
+                    <button
+                      type="button"
+                      disabled={saving || !selected}
+                      onClick={() => {
+                        if (!selected) return;
+                        const routeStepsDone = selected.steps.filter((step) => done[step.id]).map((step) => step.id);
+                        onSave({ brief: submitted ?? brief, constraints, routeId: selected.id, doneStepIds: routeStepsDone });
+                      }}
+                      className="inline-flex h-11 items-center bg-ink px-4 text-sm text-paper disabled:opacity-60"
+                    >
+                      {saving ? "Saving…" : "Save to bench"}
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="inline-flex h-11 items-center gap-2 border border-ink px-4 text-sm"
+                  >
+                    <Printer className="h-4 w-4" aria-hidden="true" />
+                    Export / print
+                  </button>
+                </div>
               ) : null}
             </div>
-            <p className="mt-2 hidden print:block font-mono text-xs">Bulldogs Build · {stamp} · Not an official Yale system</p>
+            {saveNote ? <p className="no-print mt-3 text-sm text-danger">{saveNote}</p> : null}
+            <p className="mt-2 hidden print:block font-mono text-xs">
+              {campus === "yale" ? "Bulldogs Build" : "Datum open shop"} · {stamp} · Not an official shop system
+            </p>
 
             {busy ? (
               <p className="mt-8 border border-line bg-paper px-4 py-6 text-muted" role="status">
@@ -418,12 +488,33 @@ export function MakerMap() {
                 }}
                 onOpenStep={setOpenStep}
                 constraints={constraints}
+                campus={campus}
               />
             ) : null}
           </div>
         </section>
 
         <section id="explorer" className={`no-print mx-auto max-w-6xl px-4 py-14 ${show(tab === "machines")}`}>
+          {campus === "open" ? (
+            <div>
+              <p className="font-mono text-xs tracking-[0.16em] text-cyan">PROCESS PRIMER</p>
+              <h2 className="mt-2 font-display text-4xl text-ink">What to ask a shop that is not Yale</h2>
+              <p className="mt-3 max-w-2xl text-muted">
+                These are the processes the ranker is choosing between. Your lab may not have all of them. Bulldogs Build is the page that names real Yale machines.
+              </p>
+              <ul className="mt-6 grid gap-3 md:grid-cols-2">
+                {OPEN_PROCESSES.map((item) => (
+                  <li key={item.id} className="border border-line bg-card p-4">
+                    <h3 className="font-display text-2xl">{item.name}</h3>
+                    <p className="mt-2 text-sm">{item.fit}</p>
+                    <p className="mt-2 text-sm text-warn">{item.watch}</p>
+                    <p className="mt-2 text-sm text-muted">{item.ask}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+          <>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="font-mono text-xs tracking-[0.16em] text-cyan">YALE MACHINE EXPLORER</p>
@@ -505,6 +596,8 @@ export function MakerMap() {
                 </li>
               ))}
             </ul>
+          )}
+          </>
           )}
         </section>
 
@@ -817,6 +910,7 @@ function BlueprintView({
   onToggle,
   onOpenStep,
   constraints,
+  campus,
 }: {
   plain: boolean;
   blueprint: Blueprint;
@@ -830,6 +924,7 @@ function BlueprintView({
   onToggle: (key: string) => void;
   onOpenStep: (id: string) => void;
   constraints: Constraints;
+  campus: Campus;
 }) {
   const blueprint = plain
     ? {
@@ -1121,7 +1216,7 @@ function BlueprintView({
 
       <h3 className="mt-10 font-display text-2xl text-yale">Before you visit the shop</h3>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm">
-        {prepList(selected, constraints).map((item) => (
+        {prepList(selected, constraints, campus).map((item) => (
           <li key={item}>{plain ? plainify(item) : item}</li>
         ))}
       </ul>

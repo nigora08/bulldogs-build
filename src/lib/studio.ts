@@ -1,0 +1,130 @@
+import type { Blueprint, BomLine, Constraints, PlanStep, Risk, RoutePlan } from "@/lib/engine";
+
+export type Campus = "yale" | "open";
+export type BomStatus = "need" | "ordered" | "in_hand";
+
+export interface ProjectSummary {
+  id: string;
+  title: string;
+  campus: Campus;
+  routeName: string | null;
+  stepCount: number;
+  checksDone: number;
+  deadline: string | null;
+  updatedAt: string;
+  teamId: string | null;
+  teamName: string | null;
+  owner: boolean;
+}
+
+export interface DecisionItem {
+  id: string;
+  body: string;
+  createdAt: string;
+  author: string;
+}
+
+export interface TeamSummary {
+  id: string;
+  name: string;
+  role: "owner" | "member";
+  members: number;
+  inviteCode: string;
+}
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  role: "owner" | "member";
+}
+
+export function safeNext(value: unknown, fallback = "/projects"): string {
+  if (typeof value !== "string") return fallback;
+  if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\") || value.includes("://")) return fallback;
+  return value;
+}
+
+export function asBlueprint(value: unknown): Blueprint | null {
+  if (!value || typeof value !== "object") return null;
+  const plan = value as Partial<Blueprint>;
+  if (typeof plan.title !== "string" || !Array.isArray(plan.routes)) return null;
+  return {
+    title: plan.title,
+    summary: typeof plan.summary === "string" ? plan.summary : "",
+    readout: Array.isArray(plan.readout) ? plan.readout.filter((item) => typeof item === "string") : [],
+    assumptions: Array.isArray(plan.assumptions) ? plan.assumptions.filter((item) => typeof item === "string") : [],
+    aside: typeof plan.aside === "string" ? plan.aside : null,
+    questions: Array.isArray(plan.questions) ? plan.questions.filter((item) => typeof item === "string") : [],
+    routes: plan.routes.filter(isRoute),
+  };
+}
+
+function isRoute(value: unknown): value is RoutePlan {
+  if (!value || typeof value !== "object") return false;
+  const route = value as Partial<RoutePlan>;
+  return typeof route.id === "string" && typeof route.name === "string" && Array.isArray(route.steps) && Array.isArray(route.bom);
+}
+
+export function routeSteps(route: RoutePlan | undefined): PlanStep[] {
+  if (!route) return [];
+  return route.steps.filter((step) => step && typeof step.id === "string" && typeof step.title === "string");
+}
+
+export function routeBom(route: RoutePlan | undefined): BomLine[] {
+  if (!route) return [];
+  return route.bom.filter((line) => line && typeof line.id === "string" && typeof line.item === "string");
+}
+
+export function routeRisks(route: RoutePlan | undefined): Risk[] {
+  if (!route?.risks) return [];
+  return route.risks.filter((risk) => risk && typeof risk.title === "string");
+}
+
+export function chosenRoute(plan: Blueprint | null, routeId: string | null): RoutePlan | undefined {
+  if (!plan) return undefined;
+  return plan.routes.find((route) => route.id === routeId) ?? plan.routes[0];
+}
+
+export function parseConstraints(input: unknown): Constraints {
+  const raw = (input ?? {}) as Partial<Constraints>;
+  const budget = Number(raw.budget);
+  if (!Number.isFinite(budget) || budget < 0 || budget > 20000) throw new Error("Budget needs to be a number from 0 to 20000.");
+  const size = oneOf(raw.size, ["handheld", "bench", "large"] as const, "bench");
+  const material = oneOf(raw.material, ["any", "plastic", "acrylic", "wood", "metal"] as const, "any");
+  const experience = oneOf(raw.experience, ["new", "some", "trained"] as const, "some");
+  const precision = oneOf(raw.precision, ["loose", "normal", "tight"] as const, "normal");
+  const stress = oneOf(raw.stress, ["light", "moderate", "structural"] as const, "moderate");
+  const exposure = oneOf(raw.exposure, ["indoor", "splash", "immersion", "heat"] as const, "indoor");
+  const time = oneOf(raw.time, ["evening", "week", "month"] as const, "week");
+  return { budget: Math.round(budget), size, material, experience, precision, stress, exposure, time };
+}
+
+function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
+  return typeof value === "string" && (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
+}
+
+export function daysUntil(deadline: string | null, now = new Date()): number | null {
+  if (!deadline || !/^\d{4}-\d{2}-\d{2}$/.test(deadline)) return null;
+  const [year, month, day] = deadline.split("-").map(Number);
+  const due = new Date(year, month - 1, day);
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((due.getTime() - start.getTime()) / 86_400_000);
+}
+
+export function errorText(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === "object" && err && "message" in err) {
+    const message = (err as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  return "Something went wrong. Try again.";
+}
+
+export function deadlineLabel(deadline: string | null, now = new Date()): string {
+  const days = daysUntil(deadline, now);
+  if (days == null) return "No deadline";
+  if (days < 0) return `${Math.abs(days)} day${days === -1 ? "" : "s"} past due`;
+  if (days === 0) return "Due today";
+  if (days === 1) return "Due tomorrow";
+  return `${days} days left`;
+}

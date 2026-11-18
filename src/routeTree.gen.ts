@@ -10,33 +10,141 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BulldogsRouteImport } from './routes/bulldogs'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as PlanRouteImport } from './routes/plan'
+import { Route as ProjectsIndexRouteImport } from './routes/projects/index'
+import { Route as ProjectsIdRouteImport } from './routes/projects/$id'
+import { Route as TeamsIndexRouteImport } from './routes/teams/index'
+import { Route as TeamsIdRouteImport } from './routes/teams/$id'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BulldogsRoute = BulldogsRouteImport.update({
+  id: '/bulldogs',
+  path: '/bulldogs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanRoute = PlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsIdRoute = ProjectsIdRouteImport.update({
+  id: '/projects/$id',
+  path: '/projects/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamsIndexRoute = TeamsIndexRouteImport.update({
+  id: '/teams/',
+  path: '/teams/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamsIdRoute = TeamsIdRouteImport.update({
+  id: '/teams/$id',
+  path: '/teams/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bulldogs': typeof BulldogsRoute
+  '/login': typeof LoginRoute
+  '/plan': typeof PlanRoute
+  '/projects/$id': typeof ProjectsIdRoute
+  '/teams/$id': typeof TeamsIdRoute
+  '/projects/': typeof ProjectsIndexRoute
+  '/teams/': typeof TeamsIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bulldogs': typeof BulldogsRoute
+  '/login': typeof LoginRoute
+  '/plan': typeof PlanRoute
+  '/projects/$id': typeof ProjectsIdRoute
+  '/teams/$id': typeof TeamsIdRoute
+  '/projects': typeof ProjectsIndexRoute
+  '/teams': typeof TeamsIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bulldogs': typeof BulldogsRoute
+  '/login': typeof LoginRoute
+  '/plan': typeof PlanRoute
+  '/projects/$id': typeof ProjectsIdRoute
+  '/teams/$id': typeof TeamsIdRoute
+  '/projects/': typeof ProjectsIndexRoute
+  '/teams/': typeof TeamsIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/bulldogs'
+    | '/login'
+    | '/plan'
+    | '/projects/$id'
+    | '/teams/$id'
+    | '/projects/'
+    | '/teams/'
+    | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/bulldogs'
+    | '/login'
+    | '/plan'
+    | '/projects/$id'
+    | '/teams/$id'
+    | '/projects'
+    | '/teams'
+    | '/api/auth/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/bulldogs'
+    | '/login'
+    | '/plan'
+    | '/projects/$id'
+    | '/teams/$id'
+    | '/projects/'
+    | '/teams/'
+    | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BulldogsRoute: typeof BulldogsRoute
+  LoginRoute: typeof LoginRoute
+  PlanRoute: typeof PlanRoute
+  ProjectsIdRoute: typeof ProjectsIdRoute
+  TeamsIdRoute: typeof TeamsIdRoute
+  ProjectsIndexRoute: typeof ProjectsIndexRoute
+  TeamsIndexRoute: typeof TeamsIndexRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +156,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bulldogs': {
+      id: '/bulldogs'
+      path: '/bulldogs'
+      fullPath: '/bulldogs'
+      preLoaderRoute: typeof BulldogsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plan': {
+      id: '/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof PlanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects/': {
+      id: '/projects/'
+      path: '/projects'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof ProjectsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects/$id': {
+      id: '/projects/$id'
+      path: '/projects/$id'
+      fullPath: '/projects/$id'
+      preLoaderRoute: typeof ProjectsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teams/': {
+      id: '/teams/'
+      path: '/teams'
+      fullPath: '/teams/'
+      preLoaderRoute: typeof TeamsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teams/$id': {
+      id: '/teams/$id'
+      path: '/teams/$id'
+      fullPath: '/teams/$id'
+      preLoaderRoute: typeof TeamsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BulldogsRoute: BulldogsRoute,
+  LoginRoute: LoginRoute,
+  PlanRoute: PlanRoute,
+  ProjectsIdRoute: ProjectsIdRoute,
+  TeamsIdRoute: TeamsIdRoute,
+  ProjectsIndexRoute: ProjectsIndexRoute,
+  TeamsIndexRoute: TeamsIndexRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

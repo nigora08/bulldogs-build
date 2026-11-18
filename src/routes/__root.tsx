@@ -8,12 +8,12 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Bulldogs Build" },
+      { title: "Datum" },
       {
         name: "description",
-        content: "Turn a project idea into a Yale fabrication plan: shops, machines, materials, and a build path.",
+        content: "Turn an engineering project into a build plan, a checklist, and a team bench. Bulldogs Build is the Yale shop pack.",
       },
-      { name: "theme-color", content: "#00356B" },
+      { name: "theme-color", content: "#142033" },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
