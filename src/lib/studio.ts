@@ -17,6 +17,7 @@ export interface ProjectSummary {
   owner: boolean;
   nextStepTitle: string | null;
   nextStepDetail: string | null;
+  partsNeeded: string[];
 }
 
 export interface DecisionItem {
@@ -100,6 +101,20 @@ export function nextOpenStep(
     title: step.title.replace(/\s+/g, " ").trim().slice(0, 160),
     detail: detail.slice(0, 220),
   };
+}
+
+/** Stock on the chosen route that is not marked in hand. Unset lines still count as needed. */
+export function partsStillOut(
+  plan: Blueprint | null,
+  routeId: string | null,
+  statuses: Iterable<[string, BomStatus]>,
+): string[] {
+  const known = new Map(statuses);
+  return routeBom(chosenRoute(plan, routeId))
+    .filter((line) => (known.get(line.id) ?? "need") !== "in_hand")
+    .map((line) => line.item.replace(/\s+/g, " ").trim().slice(0, 80))
+    .filter((item) => item.length > 0)
+    .slice(0, 6);
 }
 
 /** The project to reopen: soonest deadline that still has a step, otherwise the newest open one. */

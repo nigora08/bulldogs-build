@@ -26,6 +26,11 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
       <p className="mt-2 text-sm">
         {project.nextStepTitle ? `Next: ${project.nextStepTitle}` : "Chosen route is checked off."}
       </p>
+      <p className="mt-1 text-sm text-muted">
+        {project.partsNeeded.length > 0
+          ? `Still need ${project.partsNeeded.length} part${project.partsNeeded.length === 1 ? "" : "s"}`
+          : "Stock in hand"}
+      </p>
       <div className="tick mt-4" aria-hidden="true">
         <span style={{ width: `${width}%` }} />
       </div>

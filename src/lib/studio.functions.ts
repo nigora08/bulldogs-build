@@ -7,6 +7,7 @@ import { analyzeForCampus } from "@/lib/open-shop";
 import {
   asBlueprint,
   nextOpenStep,
+  partsStillOut,
   parseConstraints,
   type BomStatus,
   type Campus,
@@ -104,7 +105,7 @@ type ProjectRow = {
   blueprint: unknown;
 };
 
-function summary(row: ProjectRow, userId: string, next: { title: string; detail: string } | null): ProjectSummary {
+function summary(row: ProjectRow, userId: string, next: { title: string; detail: string } | null, partsNeeded: string[]): ProjectSummary {
   const campus: Campus = row.campus === "yale" ? "yale" : "open";
   return {
     id: row.id,
@@ -120,6 +121,7 @@ function summary(row: ProjectRow, userId: string, next: { title: string; detail:
     owner: row.owner_id === userId,
     nextStepTitle: next?.title ?? null,
     nextStepDetail: next?.detail ?? null,
+    partsNeeded,
   };
 }
 
@@ -139,11 +141,31 @@ async function doneStepsByProject(sql: Sql, projectIds: string[]): Promise<Map<s
   return map;
 }
 
+async function stockByProject(sql: Sql, projectIds: string[]): Promise<Map<string, Map<string, BomStatus>>> {
+  const map = new Map<string, Map<string, BomStatus>>();
+  if (projectIds.length === 0) return map;
+  const placeholders = projectIds.map((_, index) => `$${index + 1}`).join(", ");
+  const rows = await sql.query<{ project_id: string; line_id: string; status: string }>(
+    `select project_id, line_id, status from project_bom where project_id in (${placeholders})`,
+    projectIds,
+  );
+  for (const row of rows) {
+    if (row.status !== "need" && row.status !== "ordered" && row.status !== "in_hand") continue;
+    const lines = map.get(row.project_id) ?? new Map<string, BomStatus>();
+    lines.set(row.line_id, row.status);
+    map.set(row.project_id, lines);
+  }
+  return map;
+}
+
 async function summarize(sql: Sql, rows: ProjectRow[], userId: string): Promise<ProjectSummary[]> {
-  const done = await doneStepsByProject(sql, rows.map((row) => row.id));
+  const ids = rows.map((row) => row.id);
+  const [done, stock] = await Promise.all([doneStepsByProject(sql, ids), stockByProject(sql, ids)]);
   return rows.map((row) => {
-    const next = nextOpenStep(asBlueprint(jsonValue(row.blueprint)), row.chosen_route_id, done.get(row.id) ?? []);
-    return summary(row, userId, next);
+    const plan = asBlueprint(jsonValue(row.blueprint));
+    const next = nextOpenStep(plan, row.chosen_route_id, done.get(row.id) ?? []);
+    const partsNeeded = partsStillOut(plan, row.chosen_route_id, stock.get(row.id) ?? []);
+    return summary(row, userId, next, partsNeeded);
   });
 }
 

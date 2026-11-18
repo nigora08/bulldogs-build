@@ -173,6 +173,14 @@ function Home() {
                 ) : (
                   <h3 className="mt-2 font-display text-3xl">The chosen route is checked off.</h3>
                 )}
+                {resume.partsNeeded.length > 0 ? (
+                  <p className="mt-3 text-sm text-paper-2">
+                    Not in hand yet: {resume.partsNeeded.slice(0, 3).join(", ")}
+                    {resume.partsNeeded.length > 3 ? `, and ${resume.partsNeeded.length - 3} more` : ""}.
+                  </p>
+                ) : (
+                  <p className="mt-3 text-sm text-paper-2">Stock for this route is marked in hand.</p>
+                )}
                 <p className="mt-3 font-mono text-xs text-gold">
                   {resume.checksDone} of {resume.stepCount} steps
                   {resume.routeName ? ` · ${resume.routeName}` : ""}
