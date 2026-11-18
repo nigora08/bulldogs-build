@@ -3,8 +3,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { BeginnerPlans } from "@/components/beginner-plans";
 import { Shell } from "@/components/shell";
 import { ProjectCard } from "@/components/project-card";
-import { addDecision, listProjects, setBomStatus, setCheck } from "@/lib/studio.functions";
-import { errorText, pickReturnProject, sessionFit, type ProjectSummary } from "@/lib/studio";
+import { addDecision, listProjects, setBomStatus, setCheck, setDeadline } from "@/lib/studio.functions";
+import { deadlineLabel, errorText, pickReturnProject, sessionFit, type ProjectSummary } from "@/lib/studio";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { pickSuggestion } from "@/lib/suggestions";
 import type { Constraints } from "@/lib/engine";
@@ -21,6 +21,7 @@ function Home() {
   const [checking, setChecking] = useState(false);
   const [stocking, setStocking] = useState(false);
   const [noting, setNoting] = useState(false);
+  const [dating, setDating] = useState(false);
   const [note, setNote] = useState("");
   const [stepError, setStepError] = useState("");
   const [suggestionCursor, setSuggestionCursor] = useState(0);
@@ -56,13 +57,27 @@ function Home() {
 
   const resume = projects ? pickReturnProject(projects) : null;
 
+  async function saveDeadline(project: ProjectSummary, value: string) {
+    if (dating || checking || stocking || noting) return;
+    setDating(true);
+    setStepError("");
+    try {
+      await setDeadline({ data: { id: project.id, deadline: value || null } });
+      setProjects(await listProjects());
+    } catch (err: unknown) {
+      setStepError(errorText(err));
+    } finally {
+      setDating(false);
+    }
+  }
+
   async function leaveNote(project: ProjectSummary) {
     const body = note.trim();
     if (body.length < 2) {
       setStepError("Write the note in a sentence or two.");
       return;
     }
-    if (noting || checking || stocking) return;
+    if (noting || checking || stocking || dating) return;
     setNoting(true);
     setStepError("");
     try {
@@ -77,7 +92,7 @@ function Home() {
   }
 
   async function receivePart(project: ProjectSummary) {
-    if (!project.nextPartId || stocking || checking || noting) return;
+    if (!project.nextPartId || stocking || checking || noting || dating) return;
     setStocking(true);
     setStepError("");
     try {
@@ -91,7 +106,7 @@ function Home() {
   }
 
   async function finishStep(project: ProjectSummary) {
-    if (!project.nextStepId || checking || stocking || noting) return;
+    if (!project.nextStepId || checking || stocking || noting || dating) return;
     setChecking(true);
     setStepError("");
     try {
@@ -220,7 +235,10 @@ function Home() {
             <div className="mt-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
               <ProjectCard project={resume} />
               <div className="border border-line bg-ink p-5 text-paper">
-                <p className="font-mono text-xs tracking-[0.16em] text-gold">NEXT SESSION</p>
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="font-mono text-xs tracking-[0.16em] text-gold">NEXT SESSION</p>
+                  <p className="font-mono text-xs text-gold">{deadlineLabel(resume.deadline)}</p>
+                </div>
                 <p className="mt-3 text-sm text-paper-2">{resume.title}</p>
                 {resume.nextStepTitle ? (
                   <>
@@ -251,6 +269,18 @@ function Home() {
                     {stocking ? "Saving…" : `I have ${resume.nextPartName}`}
                   </button>
                 ) : null}
+                <label className="mt-4 flex items-center justify-between gap-3 text-sm text-paper-2">
+                  Due
+                  <input
+                    id="return-deadline"
+                    type="date"
+                    aria-label="Deadline"
+                    value={resume.deadline ?? ""}
+                    disabled={dating || checking || stocking || noting}
+                    onChange={(event) => void saveDeadline(resume, event.target.value)}
+                    className="h-11 border border-gold/40 bg-transparent px-2 text-sm text-paper [color-scheme:dark] disabled:opacity-60"
+                  />
+                </label>
                 <p className="mt-3 font-mono text-xs text-gold">
                   {resume.checksDone} of {resume.stepCount} steps
                   {resume.routeName ? ` · ${resume.routeName}` : ""}
