@@ -8,7 +8,7 @@ Grok screenshot:
 
 ## Demo
 
-57-second walkthrough: [public/demo.mp4](public/demo.mp4)
+57-second walkthrough (direct mp4 download): https://pomf2.lain.la/f/7go3qsjz.mp4
 
 ## Run
 
