@@ -110,6 +110,7 @@ function summary(
   userId: string,
   next: { id: string; title: string; detail: string; minutes: number | null; tools: string[] } | null,
   parts: { id: string; item: string }[],
+  lastNote: string | null,
 ): ProjectSummary {
   const campus: Campus = row.campus === "yale" ? "yale" : "open";
   return {
@@ -132,6 +133,7 @@ function summary(
     partsNeeded: parts.map((part) => part.item),
     nextPartId: parts[0]?.id ?? null,
     nextPartName: parts[0]?.item ?? null,
+    lastNote,
   };
 }
 
@@ -168,15 +170,35 @@ async function stockByProject(sql: Sql, projectIds: string[]): Promise<Map<strin
   return map;
 }
 
+async function latestNoteByProject(sql: Sql, projectIds: string[]): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  if (projectIds.length === 0) return map;
+  const placeholders = projectIds.map((_, index) => `$${index + 1}`).join(", ");
+  const rows = await sql.query<{ project_id: string; body: string }>(
+    `select project_id, body from decisions where project_id in (${placeholders}) order by created_at desc`,
+    projectIds,
+  );
+  for (const row of rows) {
+    if (map.has(row.project_id)) continue;
+    const body = String(row.body ?? "").replace(/\s+/g, " ").trim().slice(0, 220);
+    if (body) map.set(row.project_id, body);
+  }
+  return map;
+}
+
 async function summarize(sql: Sql, rows: ProjectRow[], userId: string): Promise<ProjectSummary[]> {
   const ids = rows.map((row) => row.id);
-  const [done, stock] = await Promise.all([doneStepsByProject(sql, ids), stockByProject(sql, ids)]);
+  const [done, stock, notes] = await Promise.all([
+    doneStepsByProject(sql, ids),
+    stockByProject(sql, ids),
+    latestNoteByProject(sql, ids),
+  ]);
   return rows.map((row) => {
     const plan = asBlueprint(jsonValue(row.blueprint));
     const campus: Campus = row.campus === "yale" ? "yale" : "open";
     const next = nextOpenStep(plan, row.chosen_route_id, done.get(row.id) ?? [], campus);
     const partsNeeded = partsStillOut(plan, row.chosen_route_id, stock.get(row.id) ?? []);
-    return summary(row, userId, next, partsNeeded);
+    return summary(row, userId, next, partsNeeded, notes.get(row.id) ?? null);
   });
 }
 

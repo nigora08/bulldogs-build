@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { ProjectCard } from "@/components/project-card";
-import { listProjects, setBomStatus, setCheck } from "@/lib/studio.functions";
+import { addDecision, listProjects, setBomStatus, setCheck } from "@/lib/studio.functions";
 import { errorText, pickReturnProject, sessionFit, type ProjectSummary } from "@/lib/studio";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { pickSuggestion } from "@/lib/suggestions";
@@ -18,6 +18,8 @@ function Home() {
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(false);
   const [stocking, setStocking] = useState(false);
+  const [noting, setNoting] = useState(false);
+  const [note, setNote] = useState("");
   const [stepError, setStepError] = useState("");
 
   useEffect(() => {
@@ -51,8 +53,28 @@ function Home() {
 
   const resume = projects ? pickReturnProject(projects) : null;
 
+  async function leaveNote(project: ProjectSummary) {
+    const body = note.trim();
+    if (body.length < 2) {
+      setStepError("Write the note in a sentence or two.");
+      return;
+    }
+    if (noting || checking || stocking) return;
+    setNoting(true);
+    setStepError("");
+    try {
+      await addDecision({ data: { id: project.id, body } });
+      setNote("");
+      setProjects(await listProjects());
+    } catch (err: unknown) {
+      setStepError(errorText(err));
+    } finally {
+      setNoting(false);
+    }
+  }
+
   async function receivePart(project: ProjectSummary) {
-    if (!project.nextPartId || stocking || checking) return;
+    if (!project.nextPartId || stocking || checking || noting) return;
     setStocking(true);
     setStepError("");
     try {
@@ -66,7 +88,7 @@ function Home() {
   }
 
   async function finishStep(project: ProjectSummary) {
-    if (!project.nextStepId || checking || stocking) return;
+    if (!project.nextStepId || checking || stocking || noting) return;
     setChecking(true);
     setStepError("");
     try {
@@ -218,7 +240,7 @@ function Home() {
                 {resume.nextPartId && resume.nextPartName ? (
                   <button
                     type="button"
-                    disabled={stocking || checking}
+                    disabled={stocking || checking || noting}
                     onClick={() => void receivePart(resume)}
                     className="mt-3 inline-flex min-h-11 max-w-full items-center border border-paper/40 px-3 py-2 text-left text-sm text-paper disabled:opacity-60"
                   >
@@ -241,7 +263,7 @@ function Home() {
                   {resume.nextStepId ? (
                     <button
                       type="button"
-                      disabled={checking || stocking}
+                      disabled={checking || stocking || noting}
                       onClick={() => void finishStep(resume)}
                       className="inline-flex h-11 items-center border border-gold px-4 text-sm text-gold disabled:opacity-60"
                     >
@@ -249,6 +271,36 @@ function Home() {
                     </button>
                   ) : null}
                 </div>
+                {resume.lastNote ? (
+                  <p className="mt-4 text-sm text-paper-2">
+                    <span className="font-mono text-xs tracking-[0.14em] text-gold">LAST NOTE </span>
+                    {resume.lastNote}
+                  </p>
+                ) : null}
+                <form
+                  className="mt-3 flex flex-wrap gap-2"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void leaveNote(resume);
+                  }}
+                >
+                  <input
+                    id="stop-note"
+                    aria-label="Why you stopped"
+                    value={note}
+                    onChange={(event) => setNote(event.target.value)}
+                    maxLength={500}
+                    placeholder="Why you stopped"
+                    className="h-11 min-w-0 flex-1 border border-gold/40 bg-transparent px-3 text-sm text-paper placeholder:text-paper-2"
+                  />
+                  <button
+                    type="submit"
+                    disabled={noting || checking || stocking}
+                    className="h-11 border border-gold px-3 text-sm text-gold disabled:opacity-60"
+                  >
+                    {noting ? "Saving…" : "Leave a note"}
+                  </button>
+                </form>
                 {stepError ? <p className="mt-3 text-sm text-[#f3c7bc]">{stepError}</p> : null}
               </div>
             </div>

@@ -24,6 +24,7 @@ export interface ProjectSummary {
   partsNeeded: string[];
   nextPartId: string | null;
   nextPartName: string | null;
+  lastNote: string | null;
 }
 
 export interface DecisionItem {
