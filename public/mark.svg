@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 98">
+  <defs>
+    <clipPath id="dan-face">
+      <circle cx="40" cy="36" r="28" />
+    </clipPath>
+  </defs>
+  <circle cx="40" cy="36" r="34" fill="#C4A35A" />
+  <path d="M14 58h52l6 28H8z" fill="#C4A35A" />
+  <circle cx="40" cy="36" r="29.5" fill="#04182E" />
+  <image href="/handsome-dan.jpg" x="10" y="6" width="60" height="60" clip-path="url(#dan-face)" preserveAspectRatio="xMidYMid slice" />
+  <circle cx="40" cy="36" r="28" fill="none" stroke="#F4F0E8" stroke-width="1.1" />
+  <circle cx="40" cy="36" r="32" fill="none" stroke="#04182E" stroke-width="0.8" />
+  <text x="40" y="80" text-anchor="middle" fill="#04182E" font-family="Georgia, 'Times New Roman', serif" font-size="12" font-weight="700" letter-spacing="1.6">BUILD</text>
+</svg>

@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Yale MakerMap",
+      "hasCanvas": false,
+      "bodyTextLen": 6258,
+      "bodyTextHash": "342a2b268e1d7da90c4bb7385c6f6d6134f0ca2b70c1850e10fd24d45e23fb8e",
+      "bodyTextPrefix": "Skip to the project brief YALE MakerMap Brief Blueprint Machines",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Yale MakerMap",
+      "hasCanvas": false,
+      "bodyTextLen": 6258,
+      "bodyTextHash": "342a2b268e1d7da90c4bb7385c6f6d6134f0ca2b70c1850e10fd24d45e23fb8e",
+      "bodyTextPrefix": "Skip to the project brief YALE MakerMap Brief Blueprint Machines",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
