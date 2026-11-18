@@ -28,6 +28,7 @@ export interface ProjectSummary {
   riskTitle: string | null;
   riskDetail: string | null;
   riskStop: boolean;
+  minutesLeft: number;
 }
 
 export interface DecisionItem {
@@ -150,16 +151,32 @@ export function nextOpenStep(
   };
 }
 
+function spanLabel(minutes: number): string {
+  if (minutes < 60) return `About ${minutes} min`;
+  if (minutes % 60 === 0) return `About ${minutes / 60} hour${minutes === 60 ? "" : "s"}`;
+  return `About ${Math.round(minutes / 6) / 10} hours`;
+}
+
 /** One line for the return card: how long the step takes, and what you need in front of you. */
 export function sessionFit(minutes: number | null, tools: string[]): string {
   const bits: string[] = [];
-  if (minutes && minutes > 0) {
-    if (minutes < 60) bits.push(`About ${minutes} min`);
-    else if (minutes % 60 === 0) bits.push(`About ${minutes / 60} hour${minutes === 60 ? "" : "s"}`);
-    else bits.push(`About ${Math.round(minutes / 6) / 10} hours`);
-  }
+  if (minutes && minutes > 0) bits.push(spanLabel(minutes));
   if (tools.length > 0) bits.push(tools.join(", "));
   return bits.join(" · ");
+}
+
+/** Unfinished minutes on the chosen route, so a 40-minute step is not mistaken for the whole job. */
+export function minutesStillOpen(plan: Blueprint | null, routeId: string | null, doneIds: Iterable<string>): number {
+  const done = new Set(doneIds);
+  return routeSteps(chosenRoute(plan, routeId)).reduce((sum, step) => {
+    if (done.has(step.id)) return sum;
+    return sum + (typeof step.minutes === "number" && step.minutes > 0 ? Math.round(step.minutes) : 0);
+  }, 0);
+}
+
+export function routeTimeLeft(minutes: number): string {
+  if (minutes <= 0) return "";
+  return `${spanLabel(minutes)} left on this route`;
 }
 
 export interface NeededPart {

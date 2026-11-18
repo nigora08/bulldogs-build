@@ -4,7 +4,7 @@ import { BeginnerPlans } from "@/components/beginner-plans";
 import { Shell } from "@/components/shell";
 import { ProjectCard } from "@/components/project-card";
 import { addDecision, listProjects, setBomStatus, setCheck, setDeadline } from "@/lib/studio.functions";
-import { deadlineLabel, errorText, pickReturnProject, sessionFit, type ProjectSummary } from "@/lib/studio";
+import { deadlineLabel, errorText, pickReturnProject, routeTimeLeft, sessionFit, type ProjectSummary } from "@/lib/studio";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { pickSuggestion } from "@/lib/suggestions";
 import type { Constraints } from "@/lib/engine";
@@ -290,6 +290,7 @@ function Home() {
                 </label>
                 <p className="mt-3 font-mono text-xs text-gold">
                   {resume.checksDone} of {resume.stepCount} steps
+                  {routeTimeLeft(resume.minutesLeft) ? ` · ${routeTimeLeft(resume.minutesLeft)}` : ""}
                   {resume.routeName ? ` · ${resume.routeName}` : ""}
                 </p>
                 <div className="mt-5 flex flex-wrap gap-2">
