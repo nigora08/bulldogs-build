@@ -247,6 +247,13 @@ function Home() {
                     {sessionFit(resume.nextStepMinutes, resume.nextStepTools) ? (
                       <p className="mt-2 font-mono text-xs text-gold">{sessionFit(resume.nextStepMinutes, resume.nextStepTools)}</p>
                     ) : null}
+                    {resume.riskTitle ? (
+                      <p className="mt-3 text-sm text-paper-2">
+                        <span className="font-mono text-xs tracking-[0.14em] text-gold">{resume.riskStop ? "STOP " : "WATCH "}</span>
+                        {resume.riskTitle}
+                        {resume.riskDetail ? `. ${resume.riskDetail}` : ""}
+                      </p>
+                    ) : null}
                   </>
                 ) : (
                   <h3 className="mt-2 font-display text-3xl">The chosen route is checked off.</h3>

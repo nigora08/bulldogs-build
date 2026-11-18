@@ -6,6 +6,7 @@ import type { Blueprint } from "@/lib/engine";
 import { analyzeForCampus } from "@/lib/open-shop";
 import {
   asBlueprint,
+  leadRisk,
   nextOpenStep,
   partsStillOut,
   parseConstraints,
@@ -111,6 +112,7 @@ function summary(
   next: { id: string; title: string; detail: string; minutes: number | null; tools: string[] } | null,
   parts: { id: string; item: string }[],
   lastNote: string | null,
+  risk: { title: string; detail: string; stop: boolean } | null,
 ): ProjectSummary {
   const campus: Campus = row.campus === "yale" ? "yale" : "open";
   return {
@@ -134,6 +136,9 @@ function summary(
     nextPartId: parts[0]?.id ?? null,
     nextPartName: parts[0]?.item ?? null,
     lastNote,
+    riskTitle: risk?.title ?? null,
+    riskDetail: risk?.detail ?? null,
+    riskStop: risk?.stop ?? false,
   };
 }
 
@@ -198,7 +203,7 @@ async function summarize(sql: Sql, rows: ProjectRow[], userId: string): Promise<
     const campus: Campus = row.campus === "yale" ? "yale" : "open";
     const next = nextOpenStep(plan, row.chosen_route_id, done.get(row.id) ?? [], campus);
     const partsNeeded = partsStillOut(plan, row.chosen_route_id, stock.get(row.id) ?? []);
-    return summary(row, userId, next, partsNeeded, notes.get(row.id) ?? null);
+    return summary(row, userId, next, partsNeeded, notes.get(row.id) ?? null, leadRisk(plan, row.chosen_route_id));
   });
 }
 

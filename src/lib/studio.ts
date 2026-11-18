@@ -25,6 +25,9 @@ export interface ProjectSummary {
   nextPartId: string | null;
   nextPartName: string | null;
   lastNote: string | null;
+  riskTitle: string | null;
+  riskDetail: string | null;
+  riskStop: boolean;
 }
 
 export interface DecisionItem {
@@ -83,6 +86,20 @@ export function routeSteps(route: RoutePlan | undefined): PlanStep[] {
 export function routeBom(route: RoutePlan | undefined): BomLine[] {
   if (!route) return [];
   return route.bom.filter((line) => line && typeof line.id === "string" && typeof line.item === "string");
+}
+
+/** The warning to read before the next session: a stop risk if the route has one. */
+export function leadRisk(
+  plan: Blueprint | null,
+  routeId: string | null,
+): { title: string; detail: string; stop: boolean } | null {
+  const risks = routeRisks(chosenRoute(plan, routeId));
+  const risk = risks.find((item) => item.severity === "stop") ?? risks[0];
+  if (!risk?.title) return null;
+  const title = risk.title.replace(/\s+/g, " ").trim().slice(0, 120);
+  const detail = (risk.detail || "").replace(/\s+/g, " ").trim().slice(0, 180);
+  if (!title) return null;
+  return { title, detail, stop: risk.severity === "stop" };
 }
 
 export function routeRisks(route: RoutePlan | undefined): Risk[] {
