@@ -109,7 +109,7 @@ function summary(
   row: ProjectRow,
   userId: string,
   next: { id: string; title: string; detail: string; minutes: number | null; tools: string[] } | null,
-  partsNeeded: string[],
+  parts: { id: string; item: string }[],
 ): ProjectSummary {
   const campus: Campus = row.campus === "yale" ? "yale" : "open";
   return {
@@ -129,7 +129,9 @@ function summary(
     nextStepDetail: next?.detail ?? null,
     nextStepMinutes: next?.minutes ?? null,
     nextStepTools: next?.tools ?? [],
-    partsNeeded,
+    partsNeeded: parts.map((part) => part.item),
+    nextPartId: parts[0]?.id ?? null,
+    nextPartName: parts[0]?.item ?? null,
   };
 }
 

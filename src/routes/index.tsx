@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { ProjectCard } from "@/components/project-card";
-import { listProjects, setCheck } from "@/lib/studio.functions";
+import { listProjects, setBomStatus, setCheck } from "@/lib/studio.functions";
 import { errorText, pickReturnProject, sessionFit, type ProjectSummary } from "@/lib/studio";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { pickSuggestion } from "@/lib/suggestions";
@@ -17,6 +17,7 @@ function Home() {
   const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(false);
+  const [stocking, setStocking] = useState(false);
   const [stepError, setStepError] = useState("");
 
   useEffect(() => {
@@ -50,8 +51,22 @@ function Home() {
 
   const resume = projects ? pickReturnProject(projects) : null;
 
+  async function receivePart(project: ProjectSummary) {
+    if (!project.nextPartId || stocking || checking) return;
+    setStocking(true);
+    setStepError("");
+    try {
+      await setBomStatus({ data: { id: project.id, lineId: project.nextPartId, status: "in_hand" } });
+      setProjects(await listProjects());
+    } catch (err: unknown) {
+      setStepError(errorText(err));
+    } finally {
+      setStocking(false);
+    }
+  }
+
   async function finishStep(project: ProjectSummary) {
-    if (!project.nextStepId || checking) return;
+    if (!project.nextStepId || checking || stocking) return;
     setChecking(true);
     setStepError("");
     try {
@@ -200,6 +215,16 @@ function Home() {
                 ) : (
                   <p className="mt-3 text-sm text-paper-2">Stock for this route is marked in hand.</p>
                 )}
+                {resume.nextPartId && resume.nextPartName ? (
+                  <button
+                    type="button"
+                    disabled={stocking || checking}
+                    onClick={() => void receivePart(resume)}
+                    className="mt-3 inline-flex min-h-11 max-w-full items-center border border-paper/40 px-3 py-2 text-left text-sm text-paper disabled:opacity-60"
+                  >
+                    {stocking ? "Saving…" : `I have ${resume.nextPartName}`}
+                  </button>
+                ) : null}
                 <p className="mt-3 font-mono text-xs text-gold">
                   {resume.checksDone} of {resume.stepCount} steps
                   {resume.routeName ? ` · ${resume.routeName}` : ""}
@@ -216,7 +241,7 @@ function Home() {
                   {resume.nextStepId ? (
                     <button
                       type="button"
-                      disabled={checking}
+                      disabled={checking || stocking}
                       onClick={() => void finishStep(resume)}
                       className="inline-flex h-11 items-center border border-gold px-4 text-sm text-gold disabled:opacity-60"
                     >

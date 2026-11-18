@@ -22,6 +22,8 @@ export interface ProjectSummary {
   nextStepMinutes: number | null;
   nextStepTools: string[];
   partsNeeded: string[];
+  nextPartId: string | null;
+  nextPartName: string | null;
 }
 
 export interface DecisionItem {
@@ -142,17 +144,25 @@ export function sessionFit(minutes: number | null, tools: string[]): string {
   return bits.join(" · ");
 }
 
+export interface NeededPart {
+  id: string;
+  item: string;
+}
+
 /** Stock on the chosen route that is not marked in hand. Unset lines still count as needed. */
 export function partsStillOut(
   plan: Blueprint | null,
   routeId: string | null,
   statuses: Iterable<[string, BomStatus]>,
-): string[] {
+): NeededPart[] {
   const known = new Map(statuses);
   return routeBom(chosenRoute(plan, routeId))
     .filter((line) => (known.get(line.id) ?? "need") !== "in_hand")
-    .map((line) => line.item.replace(/\s+/g, " ").trim().slice(0, 80))
-    .filter((item) => item.length > 0)
+    .map((line) => ({
+      id: line.id,
+      item: line.item.replace(/\s+/g, " ").trim().slice(0, 80),
+    }))
+    .filter((line) => line.id.length > 0 && line.item.length > 0)
     .slice(0, 6);
 }
 
