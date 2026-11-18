@@ -93,6 +93,9 @@ const grokClientId = env("GROK_AUTH_CLIENT_ID") ?? PREVIEW_CLIENT_ID;
 const grokClientSecret = env("GROK_AUTH_CLIENT_SECRET");
 const grokOAuthReady = Boolean(grokClientId && grokClientSecret);
 
+/** True when Google/X can actually start. The buttons must follow this, not a hardcoded list. */
+export const brokerSignInEnabled = grokOAuthReady;
+
 /** True when sign-in is enforced (email/password, broker OAuth, or both). */
 export const authConfigured =
   !authDisabled && (grokOAuthReady || emailAndPasswordEnabled);

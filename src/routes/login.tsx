@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { authClient, signIn } from "@/lib/auth/client";
+import { getSignInMethods } from "@/lib/auth/methods.functions";
 import { GROK_PROVIDERS } from "@/lib/auth/providers";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { errorText, safeNext } from "@/lib/studio";
@@ -32,6 +33,21 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [broker, setBroker] = useState(false);
+
+  useEffect(() => {
+    let cancel = false;
+    getSignInMethods()
+      .then((methods) => {
+        if (!cancel) setBroker(methods.broker);
+      })
+      .catch(() => {
+        if (!cancel) setBroker(false);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!isPending && user) window.location.assign(next);
@@ -91,7 +107,7 @@ function LoginPage() {
           <ul className="mt-6 space-y-2 text-sm text-muted">
             <li>Saved projects stay on this desk.</li>
             <li>A team code shares one project, not your whole account.</li>
-            <li>Email works on any link. Google and X are there when that sign-in is available.</li>
+            <li>Use email and a password. Google and X appear only when this host can finish that sign-in.</li>
           </ul>
         </div>
         <form className="form-card border border-line p-5" onSubmit={(event) => void submit(event)}>
@@ -142,18 +158,27 @@ function LoginPage() {
           <button type="submit" disabled={busy} className="mt-4 h-12 w-full bg-cyan text-paper disabled:opacity-60">
             {busy ? "Working…" : mode === "up" ? "Create account" : "Sign in"}
           </button>
-          <div className="mt-5 grid gap-2">
-            {GROK_PROVIDERS.map((provider) => (
-              <button
-                key={provider.providerId}
-                type="button"
-                className="h-11 border border-line bg-paper"
-                onClick={() => void signIn(provider.providerId, { callbackURL: next, errorCallbackURL: "/login" })}
-              >
-                Continue with {provider.label}
-              </button>
-            ))}
-          </div>
+          {broker ? (
+            <div className="mt-5 grid gap-2">
+              {GROK_PROVIDERS.map((provider) => (
+                <button
+                  key={provider.providerId}
+                  type="button"
+                  className="h-11 border border-line bg-paper"
+                  onClick={() => {
+                    setError("");
+                    void signIn(provider.providerId, { callbackURL: next, errorCallbackURL: "/login" }).catch((err: unknown) => {
+                      setError(errorText(err));
+                    });
+                  }}
+                >
+                  Continue with {provider.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-5 text-sm text-muted">Google sign-in is not available on this desk. Use email.</p>
+          )}
           <p className="mt-4 text-sm text-muted">
             <Link to="/" className="underline">
               Back to the desk
