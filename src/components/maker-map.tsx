@@ -18,11 +18,12 @@ import { ADVISORIES, EQUIPMENT, FACILITIES, getEquipment, type AccessTier, type 
 import { OPEN_PROCESSES } from "@/data/open-processes";
 import { explainPassage } from "@/lib/ask.functions";
 import { plainify, simplifyBrief } from "@/lib/plain";
+import { BeginnerPlans } from "@/components/beginner-plans";
+import { takeBriefs } from "@/lib/briefs";
 import { pickSuggestion, type Suggestion } from "@/lib/suggestions";
 import { analyzeForCampus, type Campus } from "@/lib/open-shop";
 import {
   EXAMPLES,
-  MORE_BRIEFS,
   lineCost,
   prepList,
   type Blueprint,
@@ -131,10 +132,10 @@ export function MakerMap({
   const [plain, setPlain] = useState(false);
   const [suggestionCursor, setSuggestionCursor] = useState(0);
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
-  const [briefCount, setBriefCount] = useState(EXAMPLES.length);
+  const [fresh, setFresh] = useState<ExampleProject[]>([]);
+  const [nextBatch, setNextBatch] = useState<2 | 3>(3);
+  const freshIndex = useRef(0);
   const briefBackup = useRef<string | null>(null);
-  const briefs = useMemo(() => [...EXAMPLES, ...MORE_BRIEFS].slice(0, briefCount), [briefCount]);
-  const briefsLeft = EXAMPLES.length + MORE_BRIEFS.length - briefCount;
 
   useEffect(() => {
     setStamp(new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }));
@@ -160,6 +161,14 @@ export function MakerMap({
     } catch {
       /* private mode */
     }
+  }
+
+  function loadMore() {
+    const count = nextBatch;
+    const batch = takeBriefs(freshIndex.current, count);
+    freshIndex.current += count;
+    setFresh((current) => [...current, ...batch]);
+    setNextBatch(count === 3 ? 2 : 3);
   }
 
   function suggest() {
@@ -217,9 +226,9 @@ export function MakerMap({
       const raw = sessionStorage.getItem("datum-draft");
       if (!raw) return;
       sessionStorage.removeItem("datum-draft");
-      const parsed = JSON.parse(raw) as { brief?: string };
+      const parsed = JSON.parse(raw) as { brief?: string; constraints?: Constraints };
       if (!parsed.brief || parsed.brief.trim().length < 12) return;
-      run(parsed.brief, constraints);
+      run(parsed.brief, parsed.constraints ?? constraints);
     } catch {
       /* ignore a bad draft */
     }
@@ -381,7 +390,7 @@ export function MakerMap({
               </div>
               {suggestion ? <p className="mt-2 text-sm text-muted">{suggestion.hook}</p> : null}
               <div className="mt-4 flex flex-wrap gap-2">
-                {briefs.map((example) => (
+                {EXAMPLES.map((example) => (
                   <button
                     key={example.id}
                     type="button"
@@ -391,18 +400,28 @@ export function MakerMap({
                     {example.label}
                   </button>
                 ))}
-                <button
-                  type="button"
-                  disabled={briefsLeft === 0}
-                  onClick={() => setBriefCount((count) => Math.min(EXAMPLES.length + MORE_BRIEFS.length, count + 5))}
-                  className="chip border border-yale bg-yale px-3 py-2 text-left text-sm text-paper disabled:opacity-50"
-                >
-                  {briefsLeft === 0 ? "All briefs shown" : `Generate ${Math.min(5, briefsLeft)} more briefs`}
-                </button>
               </div>
+              <button type="button" onClick={loadMore} className="mt-3 text-sm text-yale underline">
+                {nextBatch === 3 ? "Three more ideas" : "Two more ideas"}
+              </button>
             </form>
           </div>
         </section>
+
+        <div className={show(tab === "brief")}>
+          {fresh.length > 0 ? (
+            <section className="border-t border-line bg-card">
+              <div className="mx-auto max-w-6xl px-4 py-8">
+                <p className="font-mono text-xs tracking-[0.16em] text-cyan">ANOTHER BRIEF</p>
+                <h2 className="mt-2 font-display text-3xl">Different from the last one.</h2>
+                <div className="mt-5">
+                  <FreshIdeas ideas={fresh} nextBatch={nextBatch} onOpen={(example) => run(example.brief, example.constraints)} onMore={loadMore} />
+                </div>
+              </div>
+            </section>
+          ) : null}
+          <BeginnerPlans onOpen={(plan) => run(plan.brief, plan.constraints)} />
+        </div>
 
         <section className={`no-print mx-auto max-w-6xl px-4 py-8 ${show(tab === "brief" || tab === "blueprint")}`}>
           <ConstraintsPanel constraints={constraints} onChange={setConstraints} />
@@ -460,7 +479,7 @@ export function MakerMap({
                   Describe a part, or start from an example. The plan will name a process, the Yale machine that can do it, what training stands in the way, and what it will not promise.
                 </p>
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  {briefs.map((example) => (
+                  {EXAMPLES.map((example) => (
                     <ExampleCard key={example.id} example={example} onOpen={() => run(example.brief, example.constraints)} />
                   ))}
                 </div>
@@ -602,24 +621,13 @@ export function MakerMap({
         </section>
 
         <section id="gallery" className={`no-print border-t border-line bg-paper-2 ${show(tab === "examples")}`}>
-          <div className="mx-auto max-w-6xl px-4 py-14">
-            <p className="font-mono text-xs tracking-[0.16em] text-cyan">PROJECT GALLERY</p>
-            <h2 className="mt-2 font-display text-4xl text-yale">{briefs.length} briefs, different paths</h2>
-            <p className="mt-3 max-w-2xl text-muted">
-              The waterproof sensor enclosure is the flagship. Each example loads its own sentence and constraints, then builds a blueprint — not a shared paragraph.
-            </p>
-            <div className="mt-6 grid gap-3 md:grid-cols-2">
-              {briefs.map((example) => (
-                <ExampleCard key={example.id} example={example} onOpen={() => run(example.brief, example.constraints)} featured />
-              ))}
-              <button
-                type="button"
-                disabled={briefsLeft === 0}
-                onClick={() => setBriefCount((count) => Math.min(EXAMPLES.length + MORE_BRIEFS.length, count + 5))}
-                className="flex min-h-28 items-center justify-center border border-yale bg-yale px-4 text-left text-paper disabled:opacity-50"
-              >
-                {briefsLeft === 0 ? "All briefs shown" : `Generate ${Math.min(5, briefsLeft)} more briefs`}
-              </button>
+          <BeginnerPlans tone="paper" onOpen={(plan) => run(plan.brief, plan.constraints)} />
+          <div className="mx-auto max-w-6xl px-4 pb-14">
+            <p className="font-mono text-xs tracking-[0.16em] text-cyan">KEEP GOING</p>
+            <h2 className="mt-2 font-display text-4xl text-yale">A different brief every time</h2>
+            <p className="mt-3 max-w-2xl text-muted">Each click adds two or three projects you have not seen. The list does not run out and it does not repeat.</p>
+            <div className="mt-6">
+              <FreshIdeas ideas={fresh} nextBatch={nextBatch} onOpen={(example) => run(example.brief, example.constraints)} onMore={loadMore} featured />
             </div>
           </div>
         </section>
@@ -853,6 +861,50 @@ function Select({
         ))}
       </select>
     </label>
+  );
+}
+
+function FreshIdeas({
+  ideas,
+  nextBatch,
+  onOpen,
+  onMore,
+  featured = false,
+}: {
+  ideas: ExampleProject[];
+  nextBatch: 2 | 3;
+  onOpen: (example: ExampleProject) => void;
+  onMore: () => void;
+  featured?: boolean;
+}) {
+  const label = nextBatch === 3 ? "Three more ideas" : "Two more ideas";
+  return (
+    <div>
+      {ideas.length > 0 ? (
+        <div className="idea-well pr-1">
+          <div className={featured ? "grid gap-3 md:grid-cols-2" : "grid gap-3 sm:grid-cols-2 lg:grid-cols-3"}>
+            {ideas.map((example) =>
+              featured ? (
+                <ExampleCard key={example.id} example={example} onOpen={() => onOpen(example)} featured />
+              ) : (
+                <button
+                  key={example.id}
+                  type="button"
+                  onClick={() => onOpen(example)}
+                  className="lift border border-line bg-paper px-4 py-4 text-left"
+                >
+                  <span className="font-mono text-[10px] tracking-[0.14em] text-cyan">{example.kicker.toUpperCase()}</span>
+                  <span className="mt-2 block font-display text-2xl leading-tight">{example.label}</span>
+                </button>
+              ),
+            )}
+          </div>
+        </div>
+      ) : null}
+      <button type="button" onClick={onMore} className="mt-3 inline-flex h-11 items-center bg-yale px-4 text-sm text-paper">
+        {label}
+      </button>
+    </div>
   );
 }
 

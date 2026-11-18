@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { BeginnerPlans } from "@/components/beginner-plans";
 import { Shell } from "@/components/shell";
 import { ProjectCard } from "@/components/project-card";
 import { addDecision, listProjects, setBomStatus, setCheck } from "@/lib/studio.functions";
 import { errorText, pickReturnProject, sessionFit, type ProjectSummary } from "@/lib/studio";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { pickSuggestion } from "@/lib/suggestions";
+import type { Constraints } from "@/lib/engine";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -21,6 +23,7 @@ function Home() {
   const [noting, setNoting] = useState(false);
   const [note, setNote] = useState("");
   const [stepError, setStepError] = useState("");
+  const [suggestionCursor, setSuggestionCursor] = useState(0);
 
   useEffect(() => {
     if (isPending || !user) return;
@@ -37,14 +40,14 @@ function Home() {
     };
   }, [isPending, user]);
 
-  function start(text: string, nextCampus: "open" | "yale") {
+  function start(text: string, nextCampus: "open" | "yale", constraints?: Constraints) {
     const clean = text.trim();
     if (clean.length < 12) {
       setError("Give it a full sentence: what it is, and what it has to survive.");
       return;
     }
     try {
-      sessionStorage.setItem("datum-draft", JSON.stringify({ brief: clean }));
+      sessionStorage.setItem("datum-draft", JSON.stringify({ brief: clean, constraints }));
     } catch {
       /* private mode still navigates */
     }
@@ -174,7 +177,8 @@ function Home() {
                   type="button"
                   className="h-12 border border-line px-4 text-sm"
                   onClick={() => {
-                    const idea = pickSuggestion(projects?.length ?? 0, brief);
+                    const idea = pickSuggestion(suggestionCursor, brief);
+                    setSuggestionCursor((cursor) => cursor + 1);
                     setBrief(idea.brief);
                     setError("");
                   }}
@@ -313,6 +317,13 @@ function Home() {
             </div>
           ) : null}
         </section>
+
+        <BeginnerPlans
+          tone="paper"
+          onOpen={(plan) => {
+            start(plan.brief, campus, plan.constraints);
+          }}
+        />
 
         <section className="border-t border-line bg-card">
           <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-3">

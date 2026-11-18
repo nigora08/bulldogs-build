@@ -91,6 +91,17 @@ test("suggest a project rotates ideas students can actually rank", () => {
   const leads = new Set(SUGGESTIONS.map((idea) => analyze(idea.brief, idea.constraints).routes[0].id));
   assert.ok(leads.size >= 3, [...leads].join(", "));
 });
+
+test("later briefs stay different instead of repeating the first set", () => {
+  const seen = new Set<string>();
+  for (let index = 0; index < 80; index += 1) {
+    const idea = pickSuggestion(index, "");
+    assert.equal(seen.has(idea.brief), false, idea.brief);
+    seen.add(idea.brief);
+  }
+  const again = pickSuggestion(80, "");
+  assert.equal(seen.has(again.brief), false);
+});
 test("a typed budget past the slider changes cost fit", () => {
   const brief = "Laser-cut acrylic organizer.";
   const low = analyze(brief, { ...base, budget: 15, material: "acrylic" });
