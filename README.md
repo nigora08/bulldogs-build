@@ -6,7 +6,7 @@ Grok screenshot:
 
 
 ## Demo
-18-second click-through of the brief, routes, constraints, machines, and extra briefs: https://pomf2.lain.la/f/jcjwneak.mp4
+54-second walkthrough of the brief, routes, constraints, machines, and extra briefs: https://pomf2.lain.la/f/2r2iitqu.mp4
 
 ## Run
 
