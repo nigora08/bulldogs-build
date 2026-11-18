@@ -105,7 +105,12 @@ type ProjectRow = {
   blueprint: unknown;
 };
 
-function summary(row: ProjectRow, userId: string, next: { title: string; detail: string } | null, partsNeeded: string[]): ProjectSummary {
+function summary(
+  row: ProjectRow,
+  userId: string,
+  next: { title: string; detail: string; minutes: number | null; tools: string[] } | null,
+  partsNeeded: string[],
+): ProjectSummary {
   const campus: Campus = row.campus === "yale" ? "yale" : "open";
   return {
     id: row.id,
@@ -121,6 +126,8 @@ function summary(row: ProjectRow, userId: string, next: { title: string; detail:
     owner: row.owner_id === userId,
     nextStepTitle: next?.title ?? null,
     nextStepDetail: next?.detail ?? null,
+    nextStepMinutes: next?.minutes ?? null,
+    nextStepTools: next?.tools ?? [],
     partsNeeded,
   };
 }
@@ -163,7 +170,8 @@ async function summarize(sql: Sql, rows: ProjectRow[], userId: string): Promise<
   const [done, stock] = await Promise.all([doneStepsByProject(sql, ids), stockByProject(sql, ids)]);
   return rows.map((row) => {
     const plan = asBlueprint(jsonValue(row.blueprint));
-    const next = nextOpenStep(plan, row.chosen_route_id, done.get(row.id) ?? []);
+    const campus: Campus = row.campus === "yale" ? "yale" : "open";
+    const next = nextOpenStep(plan, row.chosen_route_id, done.get(row.id) ?? [], campus);
     const partsNeeded = partsStillOut(plan, row.chosen_route_id, stock.get(row.id) ?? []);
     return summary(row, userId, next, partsNeeded);
   });

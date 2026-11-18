@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { ProjectCard } from "@/components/project-card";
 import { listProjects } from "@/lib/studio.functions";
-import { errorText, pickReturnProject, type ProjectSummary } from "@/lib/studio";
+import { errorText, pickReturnProject, sessionFit, type ProjectSummary } from "@/lib/studio";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { pickSuggestion } from "@/lib/suggestions";
 
@@ -169,6 +169,9 @@ function Home() {
                   <>
                     <h3 className="mt-2 font-display text-3xl">{resume.nextStepTitle}</h3>
                     {resume.nextStepDetail ? <p className="mt-2 text-sm text-paper-2">{resume.nextStepDetail}</p> : null}
+                    {sessionFit(resume.nextStepMinutes, resume.nextStepTools) ? (
+                      <p className="mt-2 font-mono text-xs text-gold">{sessionFit(resume.nextStepMinutes, resume.nextStepTools)}</p>
+                    ) : null}
                   </>
                 ) : (
                   <h3 className="mt-2 font-display text-3xl">The chosen route is checked off.</h3>

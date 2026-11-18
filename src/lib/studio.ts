@@ -1,3 +1,4 @@
+import { describeTool } from "@/data/equipment";
 import type { Blueprint, BomLine, Constraints, PlanStep, Risk, RoutePlan } from "@/lib/engine";
 
 export type Campus = "yale" | "open";
@@ -17,6 +18,8 @@ export interface ProjectSummary {
   owner: boolean;
   nextStepTitle: string | null;
   nextStepDetail: string | null;
+  nextStepMinutes: number | null;
+  nextStepTools: string[];
   partsNeeded: string[];
 }
 
@@ -88,19 +91,53 @@ export function chosenRoute(plan: Blueprint | null, routeId: string | null): Rou
   return plan.routes.find((route) => route.id === routeId) ?? plan.routes[0];
 }
 
+const OPEN_TOOL_LABELS: Record<string, string> = {
+  "ext-cad": "CAD",
+  "ceid-hand": "hand tools",
+  "ceid-bambu": "a printer",
+  "ceid-laser-large": "a laser",
+  "ceid-laser-small": "a laser",
+  "ceid-electronics": "an electronics bench",
+  "ceid-store": "shop stock",
+};
+
+function toolLabels(ids: string[], campus: Campus): string[] {
+  const labels = ids.map((id) => {
+    if (campus === "open") return OPEN_TOOL_LABELS[id] ?? "";
+    return describeTool(id).name.replace(/\s+/g, " ").trim().slice(0, 72);
+  });
+  return [...new Set(labels.filter((label) => label.length > 0))].slice(0, 2);
+}
+
 export function nextOpenStep(
   plan: Blueprint | null,
   routeId: string | null,
   doneIds: Iterable<string>,
-): { title: string; detail: string } | null {
+  campus: Campus = "open",
+): { title: string; detail: string; minutes: number | null; tools: string[] } | null {
   const done = new Set(doneIds);
   const step = routeSteps(chosenRoute(plan, routeId)).find((item) => !done.has(item.id));
   if (!step) return null;
   const detail = (step.detail || step.advice || "").replace(/\s+/g, " ").trim();
+  const minutes = typeof step.minutes === "number" && step.minutes > 0 ? Math.round(step.minutes) : null;
   return {
     title: step.title.replace(/\s+/g, " ").trim().slice(0, 160),
     detail: detail.slice(0, 220),
+    minutes,
+    tools: toolLabels(step.tools ?? [], campus),
   };
+}
+
+/** One line for the return card: how long the step takes, and what you need in front of you. */
+export function sessionFit(minutes: number | null, tools: string[]): string {
+  const bits: string[] = [];
+  if (minutes && minutes > 0) {
+    if (minutes < 60) bits.push(`About ${minutes} min`);
+    else if (minutes % 60 === 0) bits.push(`About ${minutes / 60} hour${minutes === 60 ? "" : "s"}`);
+    else bits.push(`About ${Math.round(minutes / 6) / 10} hours`);
+  }
+  if (tools.length > 0) bits.push(tools.join(", "));
+  return bits.join(" · ");
 }
 
 /** Stock on the chosen route that is not marked in hand. Unset lines still count as needed. */
