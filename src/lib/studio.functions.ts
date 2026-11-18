@@ -108,7 +108,7 @@ type ProjectRow = {
 function summary(
   row: ProjectRow,
   userId: string,
-  next: { title: string; detail: string; minutes: number | null; tools: string[] } | null,
+  next: { id: string; title: string; detail: string; minutes: number | null; tools: string[] } | null,
   partsNeeded: string[],
 ): ProjectSummary {
   const campus: Campus = row.campus === "yale" ? "yale" : "open";
@@ -124,6 +124,7 @@ function summary(
     teamId: row.team_id,
     teamName: row.team_name,
     owner: row.owner_id === userId,
+    nextStepId: next?.id ?? null,
     nextStepTitle: next?.title ?? null,
     nextStepDetail: next?.detail ?? null,
     nextStepMinutes: next?.minutes ?? null,

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { ProjectCard } from "@/components/project-card";
-import { listProjects } from "@/lib/studio.functions";
+import { listProjects, setCheck } from "@/lib/studio.functions";
 import { errorText, pickReturnProject, sessionFit, type ProjectSummary } from "@/lib/studio";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { pickSuggestion } from "@/lib/suggestions";
@@ -16,6 +16,8 @@ function Home() {
   const [campus, setCampus] = useState<"open" | "yale">("open");
   const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
   const [error, setError] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [stepError, setStepError] = useState("");
 
   useEffect(() => {
     if (isPending || !user) return;
@@ -47,6 +49,20 @@ function Home() {
   }
 
   const resume = projects ? pickReturnProject(projects) : null;
+
+  async function finishStep(project: ProjectSummary) {
+    if (!project.nextStepId || checking) return;
+    setChecking(true);
+    setStepError("");
+    try {
+      await setCheck({ data: { id: project.id, stepId: project.nextStepId, done: true } });
+      setProjects(await listProjects());
+    } catch (err: unknown) {
+      setStepError(errorText(err));
+    } finally {
+      setChecking(false);
+    }
+  }
 
   return (
     <Shell>
@@ -188,14 +204,27 @@ function Home() {
                   {resume.checksDone} of {resume.stepCount} steps
                   {resume.routeName ? ` · ${resume.routeName}` : ""}
                 </p>
-                <Link
-                  to="/projects/$id"
-                  params={{ id: resume.id }}
-                  search={{ focus: resume.nextStepTitle ? "tonight" : undefined }}
-                  className="mt-5 inline-flex h-11 items-center bg-gold px-4 text-sm text-ink"
-                >
-                  {resume.nextStepTitle ? "Do this step" : "Open the work order"}
-                </Link>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <Link
+                    to="/projects/$id"
+                    params={{ id: resume.id }}
+                    search={{ focus: resume.nextStepTitle ? "tonight" : undefined }}
+                    className="inline-flex h-11 items-center bg-gold px-4 text-sm text-ink"
+                  >
+                    {resume.nextStepTitle ? "Do this step" : "Open the work order"}
+                  </Link>
+                  {resume.nextStepId ? (
+                    <button
+                      type="button"
+                      disabled={checking}
+                      onClick={() => void finishStep(resume)}
+                      className="inline-flex h-11 items-center border border-gold px-4 text-sm text-gold disabled:opacity-60"
+                    >
+                      {checking ? "Saving…" : "Mark done"}
+                    </button>
+                  ) : null}
+                </div>
+                {stepError ? <p className="mt-3 text-sm text-[#f3c7bc]">{stepError}</p> : null}
               </div>
             </div>
           ) : null}

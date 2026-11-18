@@ -16,6 +16,7 @@ export interface ProjectSummary {
   teamId: string | null;
   teamName: string | null;
   owner: boolean;
+  nextStepId: string | null;
   nextStepTitle: string | null;
   nextStepDetail: string | null;
   nextStepMinutes: number | null;
@@ -114,13 +115,14 @@ export function nextOpenStep(
   routeId: string | null,
   doneIds: Iterable<string>,
   campus: Campus = "open",
-): { title: string; detail: string; minutes: number | null; tools: string[] } | null {
+): { id: string; title: string; detail: string; minutes: number | null; tools: string[] } | null {
   const done = new Set(doneIds);
   const step = routeSteps(chosenRoute(plan, routeId)).find((item) => !done.has(item.id));
   if (!step) return null;
   const detail = (step.detail || step.advice || "").replace(/\s+/g, " ").trim();
   const minutes = typeof step.minutes === "number" && step.minutes > 0 ? Math.round(step.minutes) : null;
   return {
+    id: step.id,
     title: step.title.replace(/\s+/g, " ").trim().slice(0, 160),
     detail: detail.slice(0, 220),
     minutes,
