@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { localExplain } from "@/lib/explain";
 
-type AskInput = { quote: string; question: string; context: string };
+type AskInput = { quote: string; question: string; context: string; campus?: string };
 
 const WINDOW_MS = 10 * 60 * 1000;
 const PER_USER_MAX = 8;
@@ -31,11 +31,12 @@ export const explainPassage = createServerFn({ method: "POST" })
     const quote = String(input?.quote ?? "").trim().slice(0, 800);
     const question = String(input?.question ?? "").trim().slice(0, 400);
     const context = String(input?.context ?? "").trim().slice(0, 1500);
+    const campus = input?.campus === "yale" ? "yale" as const : "open" as const;
     if (quote.length < 2) throw new Error("Select a little more text.");
-    return { quote, question, context };
+    return { quote, question, context, campus };
   })
   .handler(async ({ data, context }) => {
-    const fallback = localExplain(data.quote, data.question, data.context);
+    const fallback = localExplain(data.quote, data.question, data.context, data.campus);
     const apiKey = process.env.XAI_API_KEY;
     if (!apiKey || !allowModelCall(context.userId)) {
       return { ok: true as const, text: fallback, source: "notes" as const };

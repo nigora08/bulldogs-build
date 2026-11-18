@@ -646,7 +646,7 @@ export function MakerMap({
           </ul>
         </div>
       </section>
-      <SelectionAsk context={askContext} />
+      <SelectionAsk context={askContext} campus={campus} />
     </div>
   );
 }
@@ -1321,7 +1321,7 @@ function TermList({ routeId }: { routeId: string }) {
   );
 }
 
-function SelectionAsk({ context }: { context: string }) {
+function SelectionAsk({ context, campus }: { context: string; campus: "open" | "yale" }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [quote, setQuote] = useState("");
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -1378,7 +1378,7 @@ function SelectionAsk({ context }: { context: string }) {
     setError("");
     setAnswer("");
     try {
-      const result = await explainPassage({ data: { quote, question: nextQuestion, context } });
+      const result = await explainPassage({ data: { quote, question: nextQuestion, context, campus } });
       setAnswer(result.text);
       setSource(result.source === "grok" ? "Grok" : "Shop notes");
     } catch (err) {
