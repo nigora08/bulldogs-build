@@ -1382,7 +1382,8 @@ function SelectionAsk({ context }: { context: string }) {
       setAnswer(result.text);
       setSource(result.source === "grok" ? "Grok" : "Shop notes");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not answer that.");
+      const message = err instanceof Error ? err.message : "Could not answer that.";
+      setError(message === "Unauthorized" ? "Sign in to ask about a highlighted passage." : message);
     } finally {
       setLoading(false);
     }
