@@ -19,6 +19,7 @@ import { OPEN_PROCESSES } from "@/data/open-processes";
 import { explainPassage } from "@/lib/ask.functions";
 import { plainify, simplifyBrief } from "@/lib/plain";
 import { BeginnerPlans } from "@/components/beginner-plans";
+import { BulldogMark } from "@/components/bulldog-mark";
 import { takeBriefs } from "@/lib/briefs";
 import { pickSuggestion, type Suggestion } from "@/lib/suggestions";
 import { analyzeForCampus, type Campus } from "@/lib/open-shop";
@@ -270,7 +271,7 @@ export function MakerMap({
       <header className={`no-print border-b-4 border-gold text-paper shadow-[0_12px_40px_-24px_rgba(4,24,46,0.8)] ${framed ? "relative" : "sticky top-0 z-30"} ${campus === "yale" ? "bg-yale" : "bg-ink"}`}>
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <button type="button" onClick={() => setTab("brief")} className="flex items-center gap-3 text-left">
-            {campus === "yale" ? <Badge alt="Handsome Dan on a Bulldogs Build medal" /> : null}
+            {campus === "yale" ? <BulldogMark /> : null}
             <span className="leading-none">
               <span className="block font-mono text-[10px] tracking-[0.28em] text-paper">{campus === "yale" ? "YALE PACK" : "OPEN SHOP"}</span>
               <span className="mt-1 block font-display text-xl leading-none text-paper">{campus === "yale" ? "Bulldogs Build" : "Any makerspace"}</span>
@@ -656,26 +657,6 @@ export function MakerMap({
       </section>
       <SelectionAsk context={askContext} campus={campus} />
     </div>
-  );
-}
-
-function Badge({ alt }: { alt: string }) {
-  return (
-    <svg viewBox="0 0 80 98" className="h-16 w-14 shrink-0" role="img" aria-label={alt}>
-      <defs>
-        <clipPath id="bb-dan-face">
-          <circle cx="40" cy="36" r="28" />
-        </clipPath>
-      </defs>
-      <circle cx="40" cy="36" r="34" fill="#C4A35A" />
-      <path d="M14 58h52l6 30H8z" fill="#C4A35A" />
-      <circle cx="40" cy="36" r="29.5" fill="#04182E" />
-      <image href="/handsome-dan.jpg" x="8" y="4" width="64" height="64" clipPath="url(#bb-dan-face)" preserveAspectRatio="xMidYMid slice" />
-      <circle cx="40" cy="36" r="28" fill="none" stroke="#F4F0E8" strokeWidth="1.15" />
-      <text x="40" y="80" textAnchor="middle" fill="#04182E" fontFamily="Georgia, serif" fontSize="12" fontWeight="700" letterSpacing="1.6">
-        BUILD
-      </text>
-    </svg>
   );
 }
 
