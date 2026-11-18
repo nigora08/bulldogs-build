@@ -9,6 +9,7 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
     <Link
       to="/projects/$id"
       params={{ id: project.id }}
+      search={{ focus: undefined }}
       className="lift block border border-line bg-card p-4"
     >
       <div className="flex items-start justify-between gap-3">
@@ -22,6 +23,9 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
         <p className="shrink-0 text-right text-sm text-muted">{deadlineLabel(project.deadline)}</p>
       </div>
       <p className="mt-2 text-sm text-muted">{project.routeName ?? "No route chosen"}</p>
+      <p className="mt-2 text-sm">
+        {project.nextStepTitle ? `Next: ${project.nextStepTitle}` : "Chosen route is checked off."}
+      </p>
       <div className="tick mt-4" aria-hidden="true">
         <span style={{ width: `${width}%` }} />
       </div>

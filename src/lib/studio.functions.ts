@@ -6,6 +6,7 @@ import type { Blueprint } from "@/lib/engine";
 import { analyzeForCampus } from "@/lib/open-shop";
 import {
   asBlueprint,
+  nextOpenStep,
   parseConstraints,
   type BomStatus,
   type Campus,
@@ -87,10 +88,11 @@ async function assertTeamRole(sql: Sql, userId: string, teamId: string, ownerOnl
   return role;
 }
 
-function summary(row: {
+type ProjectRow = {
   id: string;
   title: string;
   campus: string;
+  chosen_route_id: string | null;
   chosen_route_name: string | null;
   step_count: number;
   checks_done: number;
@@ -99,7 +101,10 @@ function summary(row: {
   team_id: string | null;
   team_name: string | null;
   owner_id: string;
-}, userId: string): ProjectSummary {
+  blueprint: unknown;
+};
+
+function summary(row: ProjectRow, userId: string, next: { title: string; detail: string } | null): ProjectSummary {
   const campus: Campus = row.campus === "yale" ? "yale" : "open";
   return {
     id: row.id,
@@ -113,16 +118,43 @@ function summary(row: {
     teamId: row.team_id,
     teamName: row.team_name,
     owner: row.owner_id === userId,
+    nextStepTitle: next?.title ?? null,
+    nextStepDetail: next?.detail ?? null,
   };
+}
+
+async function doneStepsByProject(sql: Sql, projectIds: string[]): Promise<Map<string, Set<string>>> {
+  const map = new Map<string, Set<string>>();
+  if (projectIds.length === 0) return map;
+  const placeholders = projectIds.map((_, index) => `$${index + 1}`).join(", ");
+  const rows = await sql.query<{ project_id: string; step_id: string }>(
+    `select project_id, step_id from project_checks where project_id in (${placeholders})`,
+    projectIds,
+  );
+  for (const row of rows) {
+    const set = map.get(row.project_id) ?? new Set<string>();
+    set.add(row.step_id);
+    map.set(row.project_id, set);
+  }
+  return map;
+}
+
+async function summarize(sql: Sql, rows: ProjectRow[], userId: string): Promise<ProjectSummary[]> {
+  const done = await doneStepsByProject(sql, rows.map((row) => row.id));
+  return rows.map((row) => {
+    const next = nextOpenStep(asBlueprint(jsonValue(row.blueprint)), row.chosen_route_id, done.get(row.id) ?? []);
+    return summary(row, userId, next);
+  });
 }
 
 export const listProjects = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<ProjectSummary[]> => {
     const sql = await getSql();
-    const rows = await sql<Parameters<typeof summary>[0]>`
-      select p.id, p.title, p.campus, p.chosen_route_name, p.step_count, p.deadline::text as deadline,
-             p.updated_at::text as updated_at, p.team_id, p.owner_id, t.name as team_name,
+    const rows = await sql<ProjectRow>`
+      select p.id, p.title, p.campus, p.chosen_route_id, p.chosen_route_name, p.step_count,
+             p.deadline::text as deadline, p.updated_at::text as updated_at, p.team_id, p.owner_id,
+             p.blueprint, t.name as team_name,
              (select count(*) from project_checks c where c.project_id = p.id) as checks_done
       from projects p
       left join teams t on t.id = p.team_id
@@ -133,7 +165,7 @@ export const listProjects = createServerFn({ method: "POST" })
       order by p.updated_at desc
       limit 60
     `;
-    return rows.map((row) => summary(row, context.userId));
+    return summarize(sql, rows, context.userId);
   });
 
 export const createProject = createServerFn({ method: "POST" })
@@ -493,9 +525,10 @@ export const getTeam = createServerFn({ method: "POST" })
       where m.team_id = ${data.id}
       order by m.joined_at
     `;
-    const projects = await sql<Parameters<typeof summary>[0]>`
-      select p.id, p.title, p.campus, p.chosen_route_name, p.step_count, p.deadline::text as deadline,
-             p.updated_at::text as updated_at, p.team_id, p.owner_id, t.name as team_name,
+    const projects = await sql<ProjectRow>`
+      select p.id, p.title, p.campus, p.chosen_route_id, p.chosen_route_name, p.step_count,
+             p.deadline::text as deadline, p.updated_at::text as updated_at, p.team_id, p.owner_id,
+             p.blueprint, t.name as team_name,
              (select count(*) from project_checks c where c.project_id = p.id) as checks_done
       from projects p
       left join teams t on t.id = p.team_id
@@ -505,7 +538,7 @@ export const getTeam = createServerFn({ method: "POST" })
     return {
       team: { id: team.id, name: team.name, inviteCode: team.invite_code, role },
       members: members.map((member): TeamMember => ({ id: member.id, name: member.name, role: member.role })),
-      projects: projects.map((row) => summary(row, context.userId)),
+      projects: await summarize(sql, projects, context.userId),
     };
   });
 

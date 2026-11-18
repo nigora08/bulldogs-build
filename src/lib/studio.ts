@@ -15,6 +15,8 @@ export interface ProjectSummary {
   teamId: string | null;
   teamName: string | null;
   owner: boolean;
+  nextStepTitle: string | null;
+  nextStepDetail: string | null;
 }
 
 export interface DecisionItem {
@@ -83,6 +85,35 @@ export function routeRisks(route: RoutePlan | undefined): Risk[] {
 export function chosenRoute(plan: Blueprint | null, routeId: string | null): RoutePlan | undefined {
   if (!plan) return undefined;
   return plan.routes.find((route) => route.id === routeId) ?? plan.routes[0];
+}
+
+export function nextOpenStep(
+  plan: Blueprint | null,
+  routeId: string | null,
+  doneIds: Iterable<string>,
+): { title: string; detail: string } | null {
+  const done = new Set(doneIds);
+  const step = routeSteps(chosenRoute(plan, routeId)).find((item) => !done.has(item.id));
+  if (!step) return null;
+  const detail = (step.detail || step.advice || "").replace(/\s+/g, " ").trim();
+  return {
+    title: step.title.replace(/\s+/g, " ").trim().slice(0, 160),
+    detail: detail.slice(0, 220),
+  };
+}
+
+/** The project to reopen: soonest deadline that still has a step, otherwise the newest open one. */
+export function pickReturnProject(projects: ProjectSummary[], now = new Date()): ProjectSummary | null {
+  if (projects.length === 0) return null;
+  const open = projects.filter((project) => project.nextStepTitle);
+  const pool = open.length > 0 ? open : projects;
+  const upcoming = pool
+    .filter((project) => {
+      const days = daysUntil(project.deadline, now);
+      return days !== null && days >= 0;
+    })
+    .sort((a, b) => (daysUntil(a.deadline, now) ?? 0) - (daysUntil(b.deadline, now) ?? 0));
+  return upcoming[0] ?? pool[0];
 }
 
 export function parseConstraints(input: unknown): Constraints {

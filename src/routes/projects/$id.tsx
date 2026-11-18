@@ -28,15 +28,21 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
 type Loaded = Awaited<ReturnType<typeof getProject>>;
 
-export const Route = createFileRoute("/projects/$id")({ component: ProjectPage });
+export const Route = createFileRoute("/projects/$id")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    focus: search.focus === "tonight" ? ("tonight" as const) : undefined,
+  }),
+  component: ProjectPage,
+});
 
 function ProjectPage() {
   const { id } = Route.useParams();
+  const { focus } = Route.useSearch();
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
   const [data, setData] = useState<Loaded | null>(null);
   const [error, setError] = useState("");
-  const [tonight, setTonight] = useState(false);
+  const [tonight, setTonight] = useState(focus === "tonight");
   const [decision, setDecision] = useState("");
   const [busy, setBusy] = useState(false);
 

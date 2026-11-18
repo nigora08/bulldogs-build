@@ -35,7 +35,7 @@ function PlanPage() {
     setSaving(true);
     createProject({ data: parsed })
       .then((result) => {
-        void navigate({ to: "/projects/$id", params: { id: result.id } });
+        void navigate({ to: "/projects/$id", params: { id: result.id }, search: { focus: undefined } });
       })
       .catch((err: unknown) => {
         setNote(errorText(err));
@@ -69,7 +69,7 @@ function PlanPage() {
           setNote("");
           createProject({ data })
             .then((result) => {
-              void navigate({ to: "/projects/$id", params: { id: result.id } });
+              void navigate({ to: "/projects/$id", params: { id: result.id }, search: { focus: undefined } });
             })
             .catch((err: unknown) => {
               setNote(errorText(err));

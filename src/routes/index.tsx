@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { ProjectCard } from "@/components/project-card";
 import { listProjects } from "@/lib/studio.functions";
-import { errorText, type ProjectSummary } from "@/lib/studio";
+import { errorText, pickReturnProject, type ProjectSummary } from "@/lib/studio";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { pickSuggestion } from "@/lib/suggestions";
 
@@ -46,7 +46,7 @@ function Home() {
     void navigate({ to: "/plan", search: { campus: nextCampus } });
   }
 
-  const resume = projects?.[0];
+  const resume = projects ? pickReturnProject(projects) : null;
 
   return (
     <Shell>
@@ -164,17 +164,26 @@ function Home() {
               <ProjectCard project={resume} />
               <div className="border border-line bg-ink p-5 text-paper">
                 <p className="font-mono text-xs tracking-[0.16em] text-gold">NEXT SESSION</p>
-                <p className="mt-3 font-display text-3xl">{resume.title}</p>
-                <p className="mt-2 text-sm text-paper-2">
-                  {resume.checksDone} of {resume.stepCount} steps done
-                  {resume.routeName ? ` on ${resume.routeName}` : ""}. Open it and finish the next one before you change the design again.
+                <p className="mt-3 text-sm text-paper-2">{resume.title}</p>
+                {resume.nextStepTitle ? (
+                  <>
+                    <h3 className="mt-2 font-display text-3xl">{resume.nextStepTitle}</h3>
+                    {resume.nextStepDetail ? <p className="mt-2 text-sm text-paper-2">{resume.nextStepDetail}</p> : null}
+                  </>
+                ) : (
+                  <h3 className="mt-2 font-display text-3xl">The chosen route is checked off.</h3>
+                )}
+                <p className="mt-3 font-mono text-xs text-gold">
+                  {resume.checksDone} of {resume.stepCount} steps
+                  {resume.routeName ? ` · ${resume.routeName}` : ""}
                 </p>
                 <Link
                   to="/projects/$id"
                   params={{ id: resume.id }}
+                  search={{ focus: resume.nextStepTitle ? "tonight" : undefined }}
                   className="mt-5 inline-flex h-11 items-center bg-gold px-4 text-sm text-ink"
                 >
-                  Continue
+                  {resume.nextStepTitle ? "Do this step" : "Open the work order"}
                 </Link>
               </div>
             </div>
