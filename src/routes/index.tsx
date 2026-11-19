@@ -4,7 +4,7 @@ import { BeginnerPlans } from "@/components/beginner-plans";
 import { Shell } from "@/components/shell";
 import { ProjectCard } from "@/components/project-card";
 import { addDecision, listProjects, setBomStatus, setCheck, setDeadline } from "@/lib/studio.functions";
-import { deadlineLabel, errorText, pickReturnProject, routeTimeLeft, sessionFit, type ProjectSummary } from "@/lib/studio";
+import { deadlineLabel, errorText, paceWarning, pickReturnProject, routeTimeLeft, sessionFit, type ProjectSummary } from "@/lib/studio";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { pickSuggestion } from "@/lib/suggestions";
 import type { Constraints } from "@/lib/engine";
@@ -56,6 +56,7 @@ function Home() {
   }
 
   const resume = projects ? pickReturnProject(projects) : null;
+  const pace = resume ? paceWarning(resume.minutesLeft, resume.deadline) : null;
 
   async function saveDeadline(project: ProjectSummary, value: string) {
     if (dating || checking || stocking || noting) return;
@@ -239,6 +240,7 @@ function Home() {
                   <p className="font-mono text-xs tracking-[0.16em] text-gold">NEXT SESSION</p>
                   <p className="font-mono text-xs text-gold">{deadlineLabel(resume.deadline)}</p>
                 </div>
+                {pace ? <p className="mt-3 text-sm text-[#f3c7bc]">{pace}</p> : null}
                 <p className="mt-3 text-sm text-paper-2">{resume.title}</p>
                 {resume.nextStepTitle ? (
                   <>

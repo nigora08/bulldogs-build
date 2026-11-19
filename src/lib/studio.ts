@@ -179,6 +179,19 @@ export function routeTimeLeft(minutes: number): string {
   return `${spanLabel(minutes)} left on this route`;
 }
 
+/** One sentence when the unfinished work does not fit the days left. Quiet when it does. An evening is treated as three hours. */
+export function paceWarning(minutesLeft: number, deadline: string | null, now = new Date()): string | null {
+  if (minutesLeft <= 0) return null;
+  const days = daysUntil(deadline, now);
+  if (days == null) return null;
+  if (days < 0) return "The date has passed and this route is still open.";
+  const evenings = days + 1;
+  if (minutesLeft <= evenings * 180) return null;
+  if (days === 0) return "More than one evening is still open, and it is due today.";
+  if (days === 1) return "More than two evenings are still open, and it is due tomorrow.";
+  return `More than ${evenings} evenings are still open, and ${days} days are left.`;
+}
+
 export interface NeededPart {
   id: string;
   item: string;
