@@ -128,13 +128,13 @@ function Home() {
           <div className="hero-wash pointer-events-none absolute inset-0" aria-hidden="true" />
           <div className="relative mx-auto grid max-w-6xl gap-10 px-4 py-14 lg:grid-cols-[1.05fr_0.95fr] lg:py-20">
             <div>
-              <p className="font-mono text-xs tracking-[0.18em] text-cyan">FOR THE PROJECT THAT IS ACTUALLY DUE</p>
+              <p className="font-mono text-xs tracking-[0.18em] text-cyan">FOR THE THING YOU DECIDE TO BUILD</p>
               <h1 className="mt-4 max-w-xl font-display text-5xl leading-[1.02] sm:text-6xl">
                 Stop researching.
                 <span className="mt-1 block text-[#8a6a2f]">Start the build.</span>
               </h1>
               <p className="mt-5 max-w-lg text-lg text-muted">
-                Datum turns a project sentence into a ranked process, a bill of materials, and the next thing to do tonight. Save it, share it with your team, and check steps off until the part exists.
+                Datum turns a project sentence into a process you can run, a bill of materials, and a first step that is yours. Save it, share it with your team, and build until the part exists.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link to="/plan" search={{ campus: "open" }} className="inline-flex h-12 items-center bg-ink px-5 text-paper">
