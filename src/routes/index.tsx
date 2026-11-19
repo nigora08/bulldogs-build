@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { BeginnerPlans } from "@/components/beginner-plans";
 import { Shell } from "@/components/shell";
@@ -23,6 +23,7 @@ function Home() {
   const [noting, setNoting] = useState(false);
   const [dating, setDating] = useState(false);
   const [note, setNote] = useState("");
+  const noteRef = useRef<HTMLTextAreaElement>(null);
   const [stepError, setStepError] = useState("");
   const [suggestionCursor, setSuggestionCursor] = useState(0);
 
@@ -76,6 +77,7 @@ function Home() {
     const body = note.trim();
     if (body.length < 2) {
       setStepError("Write the note in a sentence or two.");
+      noteRef.current?.focus();
       return;
     }
     if (noting || checking || stocking || dating) return;
@@ -323,27 +325,31 @@ function Home() {
                   </p>
                 ) : null}
                 <form
-                  className="mt-3 flex flex-wrap gap-2"
+                  className="mt-4"
                   onSubmit={(event) => {
                     event.preventDefault();
                     void leaveNote(resume);
                   }}
                 >
-                  <input
+                  <label htmlFor="stop-note" className="font-mono text-xs tracking-[0.14em] text-gold">
+                    NOTE FOR NEXT TIME
+                  </label>
+                  <textarea
+                    ref={noteRef}
                     id="stop-note"
-                    aria-label="Why you stopped"
                     value={note}
                     onChange={(event) => setNote(event.target.value)}
+                    rows={2}
                     maxLength={500}
-                    placeholder="Why you stopped"
-                    className="h-11 min-w-0 flex-1 border border-gold/40 bg-transparent px-3 text-sm text-paper placeholder:text-paper-2"
+                    placeholder="What you decided, or why you stopped"
+                    className="mt-2 w-full resize-none border border-gold/70 bg-black/25 px-3 py-2 text-sm text-paper placeholder:text-paper-2"
                   />
                   <button
                     type="submit"
                     disabled={noting || checking || stocking}
-                    className="h-11 border border-gold px-3 text-sm text-gold disabled:opacity-60"
+                    className="mt-2 h-11 border border-gold px-3 text-sm text-gold disabled:opacity-60"
                   >
-                    {noting ? "Saving…" : "Leave a note"}
+                    {noting ? "Saving…" : "Save note"}
                   </button>
                 </form>
                 {stepError ? <p className="mt-3 text-sm text-[#f3c7bc]">{stepError}</p> : null}
