@@ -1,4 +1,6 @@
 import { Link } from "@tanstack/react-router";
+import { ShopPhoto } from "@/components/shop-photo";
+import { pictureForBrief } from "@/lib/pictures";
 import { deadlineLabel, type ProjectSummary } from "@/lib/studio";
 
 export function ProjectCard({ project }: { project: ProjectSummary }) {
@@ -10,8 +12,10 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
       to="/projects/$id"
       params={{ id: project.id }}
       search={{ focus: undefined }}
-      className="lift block border border-line bg-card p-4"
+      className="lift block overflow-hidden border border-line bg-card"
     >
+      <ShopPhoto src={pictureForBrief(project.title).src} alt="" className="aspect-[16/9]" />
+      <span className="block p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] tracking-[0.16em] text-cyan">
@@ -37,6 +41,7 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
       <p className="mt-2 font-mono text-xs text-muted">
         {done}/{project.stepCount} steps
       </p>
+      </span>
     </Link>
   );
 }

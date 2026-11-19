@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import type { Constraints } from "@/lib/engine";
 import { drawingDxf, drawingFileName, drawingSvg, suggestDrawing, type DrawPrim } from "@/lib/drawings";
+import { pictureForBrief } from "@/lib/pictures";
+import { ShopPhoto } from "@/components/shop-photo";
 
 function download(name: string, contents: string, type: string) {
   const blob = new Blob([contents], { type });
@@ -60,10 +62,13 @@ export function SuggestedDrawing({
     ? brief.split(".")[0].trim().split(/\s+/).slice(0, 7).join(" ").replace(/\b(a|an|the|for|with|and)$/i, "").trim()
     : title;
   const drawing = useMemo(() => suggestDrawing(brief, constraints, heading), [brief, constraints, heading]);
+  const photo = pictureForBrief(`${title} ${brief}`);
   const pad = 16;
   return (
     <section className="mt-8 border border-line bg-paper">
       <div className="grid gap-4 p-4 md:grid-cols-[minmax(0,1.1fr)_minmax(16rem,0.9fr)] md:p-5">
+        <div className="grid gap-3">
+          <ShopPhoto src={photo.src} alt={photo.alt} className="aspect-[2/1] border border-line" />
         <div className="border border-line bg-[#f4f0e8] p-3">
           <svg
             role="img"
@@ -75,6 +80,7 @@ export function SuggestedDrawing({
               <Prim key={index} prim={prim} height={drawing.height} />
             ))}
           </svg>
+        </div>
         </div>
         <div>
           <p className="font-mono text-xs tracking-[0.16em] text-cyan">SUGGESTED DRAWING</p>

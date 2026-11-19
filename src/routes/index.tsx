@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { BeginnerPlans } from "@/components/beginner-plans";
+import { ShopPhoto } from "@/components/shop-photo";
 import { Shell } from "@/components/shell";
 import { ProjectCard } from "@/components/project-card";
 import { addDecision, listProjects, setBomStatus, setCheck, setDeadline } from "@/lib/studio.functions";
@@ -138,7 +139,12 @@ function Home() {
               <p className="mt-5 max-w-lg text-lg text-muted">
                 Datum turns a project sentence into a process you can run, a bill of materials, and a first step that is yours. Save it, share it with your team, and build until the part exists.
               </p>
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-8 grid max-w-lg grid-cols-3 gap-2">
+                <ShopPhoto src="/shop/laser.jpg" alt="A laser cutter on the bench" className="aspect-square" />
+                <ShopPhoto src="/shop/box.jpg" alt="A small sealed enclosure" className="aspect-square" />
+                <ShopPhoto src="/shop/printer.jpg" alt="A desktop 3D printer" className="aspect-square" />
+              </div>
+              <div className="mt-6 flex flex-wrap gap-3">
                 <Link to="/plan" search={{ campus: "open" }} className="inline-flex h-12 items-center bg-ink px-5 text-paper">
                   Open a plan
                 </Link>

@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import type { BeginnerPlan } from "@/lib/briefs";
 import { BEGINNER_PLANS, takeBeginner } from "@/lib/briefs";
+import { pictureForBrief } from "@/lib/pictures";
+import { ShopPhoto } from "@/components/shop-photo";
 
 function DatumMark() {
   return (
@@ -42,19 +44,23 @@ export function BeginnerPlans({
           </p>
         </div>
         <div className="relative mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {BEGINNER_PLANS.map((plan, index) => (
+          {BEGINNER_PLANS.map((plan) => (
             <button
               key={plan.id}
               type="button"
               onClick={() => onOpen(plan)}
-              className={`lift flex h-full flex-col p-4 text-left ${ink ? "border border-white/15 bg-white/5 text-paper" : "border border-line bg-paper"}`}
+              className={`lift flex h-full flex-col overflow-hidden text-left ${ink ? "border border-white/15 bg-white/5 text-paper" : "border border-line bg-paper"}`}
             >
-              <span className="flex items-baseline justify-between gap-3">
-                <span className={`font-display text-3xl ${ink ? "text-gold" : "text-[#8a6a2f]"}`}>{String(index + 1).padStart(2, "0")}</span>
-                <span className={`font-mono text-[10px] tracking-[0.14em] ${ink ? "text-paper-2" : "text-muted"}`}>{plan.evening.toUpperCase()}</span>
+              <span className="relative block">
+                <ShopPhoto src={pictureForBrief(plan.brief).src} alt="" className="aspect-[4/3]" />
+                <span className={`absolute left-2 top-2 px-2 py-1 font-mono text-[10px] tracking-[0.14em] ${ink ? "bg-ink/80 text-gold" : "bg-paper/90 text-muted"}`}>
+                  {plan.evening.toUpperCase()}
+                </span>
               </span>
-              <span className="mt-4 font-display text-2xl leading-tight">{plan.label}</span>
-              <span className={`mt-2 text-sm ${ink ? "text-paper-2" : "text-muted"}`}>{plan.kicker}</span>
+              <span className="px-4 pb-4">
+                <span className="mt-3 block font-display text-2xl leading-tight">{plan.label}</span>
+                <span className={`mt-1 block text-sm ${ink ? "text-paper-2" : "text-muted"}`}>{plan.kicker}</span>
+              </span>
             </button>
           ))}
         </div>
@@ -65,11 +71,14 @@ export function BeginnerPlans({
                 key={plan.id}
                 type="button"
                 onClick={() => onOpen(plan)}
-                className={`lift flex h-full flex-col p-4 text-left ${ink ? "border border-white/15 bg-white/5 text-paper" : "border border-line bg-paper"}`}
+                className={`lift flex h-full flex-col overflow-hidden text-left ${ink ? "border border-white/15 bg-white/5 text-paper" : "border border-line bg-paper"}`}
               >
-                <span className={`font-mono text-[10px] tracking-[0.14em] ${ink ? "text-paper-2" : "text-muted"}`}>{plan.evening.toUpperCase()}</span>
-                <span className="mt-3 font-display text-2xl leading-tight">{plan.label}</span>
-                <span className={`mt-2 text-sm ${ink ? "text-paper-2" : "text-muted"}`}>{plan.kicker}</span>
+                <ShopPhoto src={pictureForBrief(plan.brief).src} alt="" className="aspect-[4/3]" />
+                <span className="px-4 pb-4">
+                  <span className={`mt-3 block font-mono text-[10px] tracking-[0.14em] ${ink ? "text-paper-2" : "text-muted"}`}>{plan.evening.toUpperCase()}</span>
+                  <span className="mt-1 block font-display text-2xl leading-tight">{plan.label}</span>
+                  <span className={`mt-1 block text-sm ${ink ? "text-paper-2" : "text-muted"}`}>{plan.kicker}</span>
+                </span>
               </button>
             ))}
           </div>

@@ -19,7 +19,9 @@ import { OPEN_PROCESSES } from "@/data/open-processes";
 import { explainPassage } from "@/lib/ask.functions";
 import { plainify, simplifyBrief } from "@/lib/plain";
 import { BeginnerPlans } from "@/components/beginner-plans";
+import { ShopPhoto } from "@/components/shop-photo";
 import { SuggestedDrawing } from "@/components/suggested-drawing";
+import { pictureForBrief, pictureForProcess } from "@/lib/pictures";
 import { BulldogMark } from "@/components/bulldog-mark";
 import { takeBriefs } from "@/lib/briefs";
 import { pickSuggestion, type Suggestion } from "@/lib/suggestions";
@@ -424,11 +426,14 @@ export function MakerMap({
                         type="button"
                         data-brief-id={example.id}
                         onClick={() => run(example.brief, example.constraints)}
-                        className="border border-line bg-paper px-3 py-2 text-left"
+                        className="flex items-start gap-3 border border-line bg-paper px-2 py-2 text-left"
                       >
-                        <span className="font-mono text-[10px] tracking-[0.14em] text-cyan">{example.kicker.toUpperCase()}</span>
-                        <span className="mt-1 block text-sm font-medium">{example.label}</span>
-                        <span className="mt-1 line-clamp-2 block text-sm text-muted">{example.brief}</span>
+                        <ShopPhoto src={pictureForBrief(example.brief).src} alt="" className="h-16 w-16 shrink-0" />
+                        <span className="min-w-0">
+                          <span className="font-mono text-[10px] tracking-[0.14em] text-cyan">{example.kicker.toUpperCase()}</span>
+                          <span className="mt-1 block text-sm font-medium">{example.label}</span>
+                          <span className="mt-1 line-clamp-2 block text-sm text-muted">{example.brief}</span>
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -543,11 +548,14 @@ export function MakerMap({
               </p>
               <ul className="mt-6 grid gap-3 md:grid-cols-2">
                 {OPEN_PROCESSES.map((item) => (
-                  <li key={item.id} className="border border-line bg-card p-4">
+                  <li key={item.id} className="overflow-hidden border border-line bg-card">
+                    <ShopPhoto src={pictureForProcess(item.id).src} alt="" className="aspect-[16/9]" />
+                    <div className="p-4">
                     <h3 className="font-display text-2xl">{item.name}</h3>
                     <p className="mt-2 text-sm">{item.fit}</p>
                     <p className="mt-2 text-sm text-warn">{item.watch}</p>
                     <p className="mt-2 text-sm text-muted">{item.ask}</p>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -619,15 +627,18 @@ export function MakerMap({
                 <li key={item.id} className="border border-line bg-card">
                   <button
                     type="button"
-                    className="flex w-full items-start justify-between gap-3 px-4 py-4 text-left"
+                    className="flex w-full items-start justify-between gap-3 px-3 py-3 text-left"
                     aria-expanded={openGear === item.id}
                     onClick={() => setOpenGear((current) => (current === item.id ? null : item.id))}
                   >
-                    <span>
+                    <span className="flex min-w-0 flex-1 items-center gap-3">
+                      <ShopPhoto src={pictureForProcess(item.processId).src} alt="" className="h-16 w-16 shrink-0" />
+                      <span className="min-w-0">
                       <span className="block font-medium">{item.name}</span>
                       <span className="mt-1 block text-sm text-muted">
                         {item.facility} · {item.process}
                       </span>
+                    </span>
                     </span>
                     <span className={`shrink-0 px-2 py-1 text-xs ${verifyClass(item.verification)}`}>{verifyLabel(item.verification)}</span>
                   </button>
@@ -889,10 +900,13 @@ function FreshIdeas({
                   type="button"
                   data-brief-id={example.id}
                   onClick={() => onOpen(example)}
-                  className="lift border border-line bg-paper px-4 py-4 text-left"
+                  className="lift flex items-center gap-3 border border-line bg-paper px-3 py-3 text-left"
                 >
-                  <span className="font-mono text-[10px] tracking-[0.14em] text-cyan">{example.kicker.toUpperCase()}</span>
-                  <span className="mt-2 block font-display text-2xl leading-tight">{example.label}</span>
+                  <ShopPhoto src={pictureForBrief(example.brief).src} alt="" className="h-16 w-16 shrink-0" />
+                  <span>
+                    <span className="font-mono text-[10px] tracking-[0.14em] text-cyan">{example.kicker.toUpperCase()}</span>
+                    <span className="mt-1 block font-display text-2xl leading-tight">{example.label}</span>
+                  </span>
                 </button>
               ),
             )}
@@ -910,13 +924,14 @@ function ExampleCard({ example, onOpen, featured = false }: { example: ExamplePr
   const icon = example.id === "waterproof" ? Droplets : example.id === "arm" ? Layers : example.id === "pcb" ? CircuitBoard : example.id === "turbine" ? Wind : Box;
   const Icon = icon;
   return (
-    <button type="button" data-brief-id={example.id} onClick={onOpen} className="lift flex h-full flex-col border border-line bg-card p-4 text-left">
-      <span className="flex items-center justify-between gap-3">
+    <button type="button" data-brief-id={example.id} onClick={onOpen} className="lift flex h-full flex-col overflow-hidden border border-line bg-card text-left">
+      <ShopPhoto src={pictureForBrief(example.brief).src} alt="" className="aspect-[16/10]" />
+      <span className="flex items-center justify-between gap-3 px-4 pt-3">
         <Icon className="h-5 w-5 text-cyan" aria-hidden="true" />
         <span className="font-mono text-xs tracking-[0.14em] text-muted">{example.kicker.toUpperCase()}</span>
       </span>
-      <span className="mt-3 font-medium">{example.label}</span>
-      {featured ? <span className="mt-2 text-sm text-muted">{example.brief}</span> : null}
+      <span className="mt-2 px-4 font-medium">{example.label}</span>
+      {featured ? <span className="mt-2 px-4 pb-4 text-sm text-muted">{example.brief}</span> : <span className="pb-4" />}
     </button>
   );
 }
@@ -1019,8 +1034,10 @@ function BlueprintView({
             type="button"
             onClick={() => onSelect(route.id)}
             aria-pressed={route.id === selected.id}
-            className={`lift border p-4 text-left ${route.id === selected.id ? "border-cyan bg-cyan-2 shadow-[inset_4px_0_0_#c4a35a]" : "border-line bg-paper"}`}
+            className={`lift overflow-hidden border text-left ${route.id === selected.id ? "border-cyan bg-cyan-2 shadow-[inset_4px_0_0_#c4a35a]" : "border-line bg-paper"}`}
           >
+            <ShopPhoto src={pictureForBrief(route.name).src} alt="" className="aspect-[16/8]" />
+            <span className="block p-4">
             <span className="font-mono text-xs text-muted">{index === 0 ? "LEAD PATH" : `ALTERNATE 0${index}`}</span>
             <span className="mt-1 block font-medium">{route.name}</span>
             <span className="mt-1 block text-sm text-muted">{route.tagline}</span>
@@ -1029,6 +1046,7 @@ function BlueprintView({
               <Stat label="Access" value={route.accessibility} />
               <Stat label="Cost fit" value={route.costScore} />
               <Stat label="Difficulty" value={route.difficulty} invert />
+            </span>
             </span>
           </button>
         ))}
@@ -1294,6 +1312,7 @@ function GearBody({ item, plain }: { item: Equipment; plain: boolean }) {
   const say = (text: string) => (plain ? plainify(text) : text);
   return (
     <div className="border-t border-line px-4 py-4 text-sm">
+      <ShopPhoto src={pictureForProcess(item.processId).src} alt={pictureForProcess(item.processId).alt} className="mb-4 aspect-[16/9]" />
       <p>{say(item.capabilities)}</p>
       <p className="mt-2">
         <span className="font-medium">Materials. </span>
