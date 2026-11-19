@@ -110,7 +110,7 @@ type ProjectRow = {
 function summary(
   row: ProjectRow,
   userId: string,
-  next: { id: string; title: string; detail: string; minutes: number | null; tools: string[] } | null,
+  next: { id: string; title: string; detail: string; minutes: number | null; tools: string[]; place: string } | null,
   parts: { id: string; item: string }[],
   lastNote: string | null,
   risk: { title: string; detail: string; stop: boolean } | null,
@@ -134,6 +134,7 @@ function summary(
     nextStepDetail: next?.detail ?? null,
     nextStepMinutes: next?.minutes ?? null,
     nextStepTools: next?.tools ?? [],
+    nextStepPlace: next?.place ?? null,
     partsNeeded: parts.map((part) => part.item),
     nextPartId: parts[0]?.id ?? null,
     nextPartName: parts[0]?.item ?? null,

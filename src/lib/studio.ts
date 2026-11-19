@@ -21,6 +21,7 @@ export interface ProjectSummary {
   nextStepDetail: string | null;
   nextStepMinutes: number | null;
   nextStepTools: string[];
+  nextStepPlace: string | null;
   partsNeeded: string[];
   nextPartId: string | null;
   nextPartName: string | null;
@@ -131,12 +132,25 @@ function toolLabels(ids: string[], campus: Campus): string[] {
   return [...new Set(labels.filter((label) => label.length > 0))].slice(0, 2);
 }
 
+const AWAY_TOOLS = new Set(["ext-cad", "ext-pcb"]);
+const BENCH_TOOLS = new Set(["ceid-hand"]);
+const STOCK_TOOLS = new Set(["ceid-store"]);
+
+/** Where the next step actually happens, so a dorm check-in is not mistaken for a shop night. */
+export function sessionPlace(toolIds: string[]): string {
+  const ids = toolIds.filter((id) => id.length > 0);
+  if (ids.some((id) => !AWAY_TOOLS.has(id) && !BENCH_TOOLS.has(id) && !STOCK_TOOLS.has(id))) return "This step is at the shop.";
+  if (ids.some((id) => BENCH_TOOLS.has(id))) return "A bench is enough for this step.";
+  if (ids.some((id) => STOCK_TOOLS.has(id))) return "This step is a stock stop.";
+  return "You can do this away from the shop.";
+}
+
 export function nextOpenStep(
   plan: Blueprint | null,
   routeId: string | null,
   doneIds: Iterable<string>,
   campus: Campus = "open",
-): { id: string; title: string; detail: string; minutes: number | null; tools: string[] } | null {
+): { id: string; title: string; detail: string; minutes: number | null; tools: string[]; place: string } | null {
   const done = new Set(doneIds);
   const step = routeSteps(chosenRoute(plan, routeId)).find((item) => !done.has(item.id));
   if (!step) return null;
@@ -148,6 +162,7 @@ export function nextOpenStep(
     detail: detail.slice(0, 220),
     minutes,
     tools: toolLabels(step.tools ?? [], campus),
+    place: sessionPlace(step.tools ?? []),
   };
 }
 

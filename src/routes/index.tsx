@@ -245,6 +245,7 @@ function Home() {
                 {resume.nextStepTitle ? (
                   <>
                     <h3 className="mt-2 font-display text-3xl">{resume.nextStepTitle}</h3>
+                    {resume.nextStepPlace ? <p className="mt-2 font-mono text-xs text-gold">{resume.nextStepPlace}</p> : null}
                     {resume.nextStepDetail ? <p className="mt-2 text-sm text-paper-2">{resume.nextStepDetail}</p> : null}
                     {sessionFit(resume.nextStepMinutes, resume.nextStepTools) ? (
                       <p className="mt-2 font-mono text-xs text-gold">{sessionFit(resume.nextStepMinutes, resume.nextStepTools)}</p>
