@@ -170,6 +170,13 @@ export function MakerMap({
     freshIndex.current += count;
     setFresh((current) => [...current, ...batch]);
     setNextBatch(count === 3 ? 2 : 3);
+    const anchorId = batch[0]?.id;
+    window.setTimeout(() => {
+      if (!anchorId) return;
+      const nodes = document.querySelectorAll(`[data-brief-id="${anchorId}"]`);
+      const visible = Array.from(nodes).find((node) => node.getClientRects().length > 0);
+      visible?.scrollIntoView({ block: "nearest" });
+    }, 40);
   }
 
   function suggest() {
@@ -402,25 +409,35 @@ export function MakerMap({
                   </button>
                 ))}
               </div>
-              <button type="button" onClick={loadMore} className="mt-3 text-sm text-yale underline">
-                {nextBatch === 3 ? "Three more ideas" : "Two more ideas"}
-              </button>
+              <div className="mt-4 border-t border-line pt-4">
+                <button type="button" onClick={loadMore} className="inline-flex h-11 items-center border border-yale px-4 text-sm font-medium text-yale">
+                  Show new briefs
+                </button>
+                {fresh.length === 0 ? (
+                  <p className="mt-2 text-sm text-muted">Each press adds two or three projects you have not seen.</p>
+                ) : (
+                  <div className="idea-well mt-3 grid gap-2 pr-1">
+                    {fresh.map((example) => (
+                      <button
+                        key={example.id}
+                        type="button"
+                        data-brief-id={example.id}
+                        onClick={() => run(example.brief, example.constraints)}
+                        className="border border-line bg-paper px-3 py-2 text-left"
+                      >
+                        <span className="font-mono text-[10px] tracking-[0.14em] text-cyan">{example.kicker.toUpperCase()}</span>
+                        <span className="mt-1 block text-sm font-medium">{example.label}</span>
+                        <span className="mt-1 line-clamp-2 block text-sm text-muted">{example.brief}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </form>
           </div>
         </section>
 
         <div className={show(tab === "brief")}>
-          {fresh.length > 0 ? (
-            <section className="border-t border-line bg-card">
-              <div className="mx-auto max-w-6xl px-4 py-8">
-                <p className="font-mono text-xs tracking-[0.16em] text-cyan">ANOTHER BRIEF</p>
-                <h2 className="mt-2 font-display text-3xl">Different from the last one.</h2>
-                <div className="mt-5">
-                  <FreshIdeas ideas={fresh} nextBatch={nextBatch} onOpen={(example) => run(example.brief, example.constraints)} onMore={loadMore} />
-                </div>
-              </div>
-            </section>
-          ) : null}
           <BeginnerPlans onOpen={(plan) => run(plan.brief, plan.constraints)} />
         </div>
 
@@ -628,7 +645,7 @@ export function MakerMap({
             <h2 className="mt-2 font-display text-4xl text-yale">A different brief every time</h2>
             <p className="mt-3 max-w-2xl text-muted">Each click adds two or three projects you have not seen. The list does not run out and it does not repeat.</p>
             <div className="mt-6">
-              <FreshIdeas ideas={fresh} nextBatch={nextBatch} onOpen={(example) => run(example.brief, example.constraints)} onMore={loadMore} featured />
+              <FreshIdeas ideas={fresh} onOpen={(example) => run(example.brief, example.constraints)} onMore={loadMore} featured />
             </div>
           </div>
         </section>
@@ -847,22 +864,19 @@ function Select({
 
 function FreshIdeas({
   ideas,
-  nextBatch,
   onOpen,
   onMore,
   featured = false,
 }: {
   ideas: ExampleProject[];
-  nextBatch: 2 | 3;
   onOpen: (example: ExampleProject) => void;
   onMore: () => void;
   featured?: boolean;
 }) {
-  const label = nextBatch === 3 ? "Three more ideas" : "Two more ideas";
   return (
     <div>
       {ideas.length > 0 ? (
-        <div className="idea-well pr-1">
+        <div>
           <div className={featured ? "grid gap-3 md:grid-cols-2" : "grid gap-3 sm:grid-cols-2 lg:grid-cols-3"}>
             {ideas.map((example) =>
               featured ? (
@@ -871,6 +885,7 @@ function FreshIdeas({
                 <button
                   key={example.id}
                   type="button"
+                  data-brief-id={example.id}
                   onClick={() => onOpen(example)}
                   className="lift border border-line bg-paper px-4 py-4 text-left"
                 >
@@ -883,7 +898,7 @@ function FreshIdeas({
         </div>
       ) : null}
       <button type="button" onClick={onMore} className="mt-3 inline-flex h-11 items-center bg-yale px-4 text-sm text-paper">
-        {label}
+        Show new briefs
       </button>
     </div>
   );
@@ -893,7 +908,7 @@ function ExampleCard({ example, onOpen, featured = false }: { example: ExamplePr
   const icon = example.id === "waterproof" ? Droplets : example.id === "arm" ? Layers : example.id === "pcb" ? CircuitBoard : example.id === "turbine" ? Wind : Box;
   const Icon = icon;
   return (
-    <button type="button" onClick={onOpen} className="lift flex h-full flex-col border border-line bg-card p-4 text-left">
+    <button type="button" data-brief-id={example.id} onClick={onOpen} className="lift flex h-full flex-col border border-line bg-card p-4 text-left">
       <span className="flex items-center justify-between gap-3">
         <Icon className="h-5 w-5 text-cyan" aria-hidden="true" />
         <span className="font-mono text-xs tracking-[0.14em] text-muted">{example.kicker.toUpperCase()}</span>
