@@ -950,14 +950,16 @@ function assumptionsFor(brief: string, s: Signals): string[] {
   return lines;
 }
 
-export function prepList(route: RoutePlan, constraints: Constraints): string[] {
+export function prepList(route: RoutePlan, constraints: Constraints, campus: "yale" | "open" = "yale"): string[] {
   const c = normalizeConstraints(constraints);
   const training =
-    route.accessTier === "trained"
-      ? "Finish the named training before you go. For the CEID laser that is the Workday course plus the in-person session."
-      : route.accessTier === "member"
-        ? "CEID orientation is the gate. Confirm whether the studio is open or staffed-hours only this term."
-        : "Email the shop before you visit. A name on a Yale page is not permission to walk in.";
+    campus === "open"
+      ? "Ask your shop which machine you may run, which file they want, and what they will not cut. A process rank is not a reservation."
+      : route.accessTier === "trained"
+        ? "Finish the named training before you go. For the CEID laser that is the Workday course plus the in-person session."
+        : route.accessTier === "member"
+          ? "CEID orientation is the gate. Confirm whether the studio is open or staffed-hours only this term."
+          : "Email the shop before you visit. A name on a Yale page is not permission to walk in.";
   return [
     "A drawing with units. Mark which dimensions are measured and which are still guesses.",
     c.precision === "tight"

@@ -1,3 +1,4 @@
+import { briefAt } from "./briefs.ts";
 import type { ExampleProject } from "./engine.ts";
 
 export interface Suggestion extends ExampleProject {
@@ -98,9 +99,11 @@ export const SUGGESTIONS: Suggestion[] = [
 ];
 
 export function pickSuggestion(cursor: number, currentBrief: string): Suggestion {
-  for (let step = 0; step < SUGGESTIONS.length; step += 1) {
-    const idea = SUGGESTIONS[(cursor + step) % SUGGESTIONS.length];
-    if (idea.brief !== currentBrief) return idea;
+  const start = Math.max(0, cursor);
+  for (let step = 0; step < 24; step += 1) {
+    const idea = briefAt(start + step);
+    if (idea.brief !== currentBrief) return { ...idea, hook: idea.kicker };
   }
-  return SUGGESTIONS[cursor % SUGGESTIONS.length];
+  const idea = briefAt(start);
+  return { ...idea, hook: idea.kicker };
 }

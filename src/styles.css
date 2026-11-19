@@ -115,6 +115,31 @@ fieldset button[aria-pressed="true"] {
   box-shadow: inset 0 -3px 0 var(--color-gold);
 }
 
+.beginner-stage {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(520px 240px at 100% 0%, rgba(196, 163, 90, 0.22), transparent 60%),
+    radial-gradient(420px 220px at 0% 100%, rgba(12, 124, 120, 0.18), transparent 55%),
+    var(--color-yale-ink);
+  color: var(--color-paper);
+}
+
+.datum-mark {
+  position: absolute;
+  top: -4.5rem;
+  right: -2rem;
+  width: 16rem;
+  height: 16rem;
+  color: rgba(196, 163, 90, 0.45);
+  pointer-events: none;
+}
+
+.idea-well {
+  max-height: 26rem;
+  overflow: auto;
+}
+
 .tick {
   height: 0.35rem;
   border-radius: 999px;
