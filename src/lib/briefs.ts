@@ -129,3 +129,52 @@ export function briefAt(index: number): ExampleProject {
 export function takeBriefs(start: number, count: number): ExampleProject[] {
   return Array.from({ length: count }, (_, offset) => briefAt(start + offset));
 }
+
+const BEGINNER_OBJECTS: ObjectSeed[] = [
+  { label: "Door tag", open: "A small wooden door tag with a name and one hanging hole", closer: "Letters can be engraved, not cut through.", constraints: { budget: 15, size: "handheld", material: "wood", experience: "new", stress: "light", precision: "loose", exposure: "indoor", time: "evening" } },
+  { label: "Cable clip", open: "A plastic clip that holds one cable to a desk leg", closer: "It snaps on. No screws into the desk.", constraints: { budget: 12, size: "handheld", material: "plastic", experience: "new", stress: "light", precision: "loose", exposure: "indoor", time: "evening" } },
+  { label: "Coaster", open: "A square wooden coaster with an engraved mark", closer: "It only has to survive a cold drink.", constraints: { budget: 10, size: "handheld", material: "wood", experience: "new", stress: "light", precision: "loose", exposure: "indoor", time: "evening" } },
+  { label: "Bookmark", open: "A thin wooden bookmark with a corner cut", closer: "It lives in a paperback.", constraints: { budget: 8, size: "handheld", material: "wood", experience: "new", stress: "light", precision: "loose", exposure: "indoor", time: "evening" } },
+  { label: "Key tag", open: "A small acrylic key tag with a split-ring hole", closer: "The hole has to clear a real ring.", constraints: { budget: 12, size: "handheld", material: "acrylic", experience: "new", stress: "light", precision: "loose", exposure: "indoor", time: "evening" } },
+  { label: "Plant stake", open: "A flat stake that marks one windowsill plant", closer: "It can get wet from watering.", constraints: { budget: 10, size: "handheld", material: "acrylic", experience: "new", stress: "light", precision: "loose", exposure: "splash", time: "evening" } },
+  { label: "Card stand", open: "A folded card stand for one index card", closer: "Two flats from one sheet.", constraints: { budget: 15, size: "handheld", material: "wood", experience: "new", stress: "light", precision: "loose", exposure: "indoor", time: "evening" } },
+  { label: "Lid sketch", open: "A clear lid blank with four corner holes and a window mark", closer: "The window is drawn first, cut later if you still want it.", constraints: { budget: 30, size: "bench", material: "acrylic", experience: "new", stress: "light", precision: "normal", exposure: "indoor", time: "week" } },
+  { label: "Sample tray", open: "A shallow tray for six small parts", closer: "Walls can be a second cut.", constraints: { budget: 25, size: "bench", material: "wood", experience: "new", stress: "light", precision: "loose", exposure: "indoor", time: "week" } },
+  { label: "Phone wedge", open: "A wooden wedge that holds a phone at a reading angle", closer: "No moving hinge on the first version.", constraints: { budget: 18, size: "handheld", material: "wood", experience: "new", stress: "light", precision: "loose", exposure: "indoor", time: "evening" } },
+  { label: "Badge plate", open: "A badge-sized plate for a pin back", closer: "The pin is bought, not made.", constraints: { budget: 15, size: "handheld", material: "acrylic", experience: "new", stress: "light", precision: "loose", exposure: "indoor", time: "evening" } },
+  { label: "Cord wrap", open: "A flat wrap that keeps a charger cord in a loop", closer: "Light duty, indoor.", constraints: { budget: 10, size: "handheld", material: "plastic", experience: "new", stress: "light", precision: "loose", exposure: "indoor", time: "evening" } },
+];
+
+const BEGINNER_PLACES: PlaceSeed[] = [
+  { short: "Dorm", phrase: "for a dorm room" },
+  { short: "Desk", phrase: "for a desk you already have" },
+  { short: "Window", phrase: "for a windowsill" },
+  { short: "Bag", phrase: "to drop in a bag" },
+  { short: "Lab", phrase: "for the edge of a lab bench" },
+  { short: "Club", phrase: "for a club table" },
+];
+
+const BEGINNER_SPAN = BEGINNER_OBJECTS.length * BEGINNER_PLACES.length;
+
+/** A new first-build every index. Later laps change the size so the sentence does not repeat. */
+export function beginnerAt(index: number): BeginnerPlan {
+  const safe = Math.max(0, Math.floor(index));
+  const round = Math.floor(safe / BEGINNER_SPAN);
+  const slot = (safe * 5) % BEGINNER_SPAN;
+  const object = BEGINNER_OBJECTS[slot % BEGINNER_OBJECTS.length];
+  const place = BEGINNER_PLACES[Math.floor(slot / BEGINNER_OBJECTS.length) % BEGINNER_PLACES.length];
+  const mm = 60 + ((safe * 13) % 9) * 10;
+  const label = round === 0 ? object.label : `${object.label} · ${mm} mm`;
+  return {
+    id: `beginner-${safe}`,
+    label,
+    kicker: place.short,
+    evening: object.constraints.time === "week" ? "About one week" : "About one evening",
+    brief: `${object.open}, ${place.phrase}. I am new to the shop. ${object.closer} ${spanOf(mm)}`,
+    constraints: { ...object.constraints },
+  };
+}
+
+export function takeBeginner(start: number, count: number): BeginnerPlan[] {
+  return Array.from({ length: count }, (_, offset) => beginnerAt(start + offset));
+}

@@ -42,26 +42,55 @@ export { GROK_PROVIDERS };
 
 // ── Live-preview bearer token ────────────────────────────────────────────────
 // The embedded preview iframe has partitioned cookies, so we keep the session's
-// bearer token in sessionStorage and attach it to every Better Auth request (and
-// to server functions, via `@/lib/auth/middleware`). Empty everywhere except the
-// preview after a popup sign-in, so the cookie path is untouched elsewhere.
+// bearer token and attach it to every Better Auth request (and to server
+// functions, via `@/lib/auth/middleware`). Stay signed in keeps that token in
+// localStorage. Otherwise it lives in sessionStorage and ends with the tab.
 const BEARER_KEY = "grok-auth.bearer-token";
+const STAY_KEY = "datum-stay-signed-in";
 
-/** The stored preview bearer token, or null. */
+/** True when the visitor asked to stay signed in on this browser. Defaults to yes. */
+export function staySignedIn(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    return window.localStorage.getItem(STAY_KEY) !== "0";
+  } catch {
+    return true;
+  }
+}
+
+export function setStaySignedIn(stay: boolean): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STAY_KEY, stay ? "1" : "0");
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+/** The stored preview bearer token, or null. A stay-signed-in choice keeps it across browser restarts. */
 export function getBearerToken(): string | null {
   if (typeof window === "undefined") return null;
   try {
+    if (staySignedIn()) return window.localStorage.getItem(BEARER_KEY) ?? window.sessionStorage.getItem(BEARER_KEY);
     return window.sessionStorage.getItem(BEARER_KEY);
   } catch {
     return null;
   }
 }
 
+/** Keep or drop the preview session token according to the stay-signed-in choice. */
+export function storeBearerToken(token: string | null): void {
+  setBearerToken(token);
+}
+
 function setBearerToken(token: string | null): void {
   if (typeof window === "undefined") return;
   try {
-    if (token) window.sessionStorage.setItem(BEARER_KEY, token);
-    else window.sessionStorage.removeItem(BEARER_KEY);
+    window.sessionStorage.removeItem(BEARER_KEY);
+    window.localStorage.removeItem(BEARER_KEY);
+    if (!token) return;
+    if (staySignedIn()) window.localStorage.setItem(BEARER_KEY, token);
+    else window.sessionStorage.setItem(BEARER_KEY, token);
   } catch {
     /* storage unavailable — ignore */
   }

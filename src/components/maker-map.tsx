@@ -19,6 +19,7 @@ import { OPEN_PROCESSES } from "@/data/open-processes";
 import { explainPassage } from "@/lib/ask.functions";
 import { plainify, simplifyBrief } from "@/lib/plain";
 import { BeginnerPlans } from "@/components/beginner-plans";
+import { SuggestedDrawing } from "@/components/suggested-drawing";
 import { BulldogMark } from "@/components/bulldog-mark";
 import { takeBriefs } from "@/lib/briefs";
 import { pickSuggestion, type Suggestion } from "@/lib/suggestions";
@@ -481,6 +482,7 @@ export function MakerMap({
               ) : null}
             </div>
             {saveNote ? <p className="no-print mt-3 text-sm text-danger">{saveNote}</p> : null}
+            {blueprint ? <SuggestedDrawing brief={submitted ?? brief} constraints={constraints} title={plain ? plainify(blueprint.title) : blueprint.title} /> : null}
             <p className="mt-2 hidden print:block font-mono text-xs">
               {campus === "yale" ? "Bulldogs Build" : "Datum open shop"} · {stamp} · Not an official shop system
             </p>

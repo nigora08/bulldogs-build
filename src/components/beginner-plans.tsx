@@ -1,5 +1,6 @@
+import { useRef, useState } from "react";
 import type { BeginnerPlan } from "@/lib/briefs";
-import { BEGINNER_PLANS } from "@/lib/briefs";
+import { BEGINNER_PLANS, takeBeginner } from "@/lib/briefs";
 
 function DatumMark() {
   return (
@@ -20,6 +21,15 @@ export function BeginnerPlans({
   tone?: "ink" | "paper";
 }) {
   const ink = tone === "ink";
+  const [extra, setExtra] = useState<BeginnerPlan[]>([]);
+  const cursor = useRef(0);
+
+  function more() {
+    const batch = takeBeginner(cursor.current, 3);
+    cursor.current += 3;
+    setExtra((current) => [...current, ...batch]);
+  }
+
   return (
     <section className={ink ? "beginner-stage" : "border-t border-line bg-card"}>
       <div className="relative mx-auto max-w-6xl px-4 py-12">
@@ -28,7 +38,7 @@ export function BeginnerPlans({
           <p className={`font-mono text-xs tracking-[0.18em] ${ink ? "text-gold" : "text-cyan"}`}>FIRST EVENING</p>
           <h2 className={`mt-2 font-display text-4xl leading-tight ${ink ? "text-paper" : "text-ink"}`}>Start with a plan you can finish.</h2>
           <p className={`mt-3 text-sm ${ink ? "text-paper-2" : "text-muted"}`}>
-            Four beginner builds. One process, a small budget, and a sentence you can rank right now.
+            A few first builds. One process, a small budget, and a sentence you can rank right now. Each press adds three you have not seen.
           </p>
         </div>
         <div className="relative mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -48,6 +58,29 @@ export function BeginnerPlans({
             </button>
           ))}
         </div>
+        {extra.length > 0 ? (
+          <div className={`relative mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 ${extra.length > 8 ? "idea-well" : ""}`}>
+            {extra.map((plan) => (
+              <button
+                key={plan.id}
+                type="button"
+                onClick={() => onOpen(plan)}
+                className={`lift flex h-full flex-col p-4 text-left ${ink ? "border border-white/15 bg-white/5 text-paper" : "border border-line bg-paper"}`}
+              >
+                <span className={`font-mono text-[10px] tracking-[0.14em] ${ink ? "text-paper-2" : "text-muted"}`}>{plan.evening.toUpperCase()}</span>
+                <span className="mt-3 font-display text-2xl leading-tight">{plan.label}</span>
+                <span className={`mt-2 text-sm ${ink ? "text-paper-2" : "text-muted"}`}>{plan.kicker}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <button
+          type="button"
+          onClick={more}
+          className={`relative mt-4 inline-flex h-11 items-center px-4 text-sm ${ink ? "border border-gold text-gold" : "bg-ink text-paper"}`}
+        >
+          More beginner builds
+        </button>
       </div>
     </section>
   );

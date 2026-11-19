@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
-import { authClient, signIn } from "@/lib/auth/client";
+import { authClient, setStaySignedIn, signIn, staySignedIn, storeBearerToken } from "@/lib/auth/client";
 import { getSignInMethods } from "@/lib/auth/methods.functions";
 import { GROK_PROVIDERS } from "@/lib/auth/providers";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -16,12 +16,7 @@ export const Route = createFileRoute("/login")({
 
 function rememberToken(response: Response) {
   const token = response.headers.get("set-auth-token");
-  if (!token) return;
-  try {
-    window.sessionStorage.setItem("grok-auth.bearer-token", token);
-  } catch {
-    /* storage unavailable */
-  }
+  if (token) storeBearerToken(token);
 }
 
 function LoginPage() {
@@ -34,6 +29,11 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [broker, setBroker] = useState(false);
+  const [stay, setStay] = useState(true);
+
+  useEffect(() => {
+    setStay(staySignedIn());
+  }, []);
 
   useEffect(() => {
     let cancel = false;
@@ -77,17 +77,16 @@ function LoginPage() {
           email: email.trim(),
           password,
           name: display,
-          fetchOptions: { onSuccess: (ctx) => rememberToken(ctx.response) },
         });
         if (signUpError) throw new Error(signUpError.message ?? "Could not create the account.");
-      } else {
-        const { error: signInError } = await authClient.signIn.email({
-          email: email.trim(),
-          password,
-          fetchOptions: { onSuccess: (ctx) => rememberToken(ctx.response) },
-        });
-        if (signInError) throw new Error(signInError.message ?? "Could not sign in.");
       }
+      const { error: signInError } = await authClient.signIn.email({
+        email: email.trim(),
+        password,
+        rememberMe: stay,
+        fetchOptions: { onSuccess: (ctx) => rememberToken(ctx.response) },
+      });
+      if (signInError) throw new Error(signInError.message ?? "Could not sign in.");
       window.location.assign(next);
     } catch (err) {
       setError(errorText(err));
@@ -153,6 +152,22 @@ function LoginPage() {
               autoComplete={mode === "up" ? "new-password" : "current-password"}
               className="mt-1 h-11 w-full border border-line bg-paper px-3"
             />
+          </label>
+          <label className="mt-4 flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1 h-4 w-4"
+              checked={stay}
+              onChange={(event) => {
+                const nextStay = event.target.checked;
+                setStay(nextStay);
+                setStaySignedIn(nextStay);
+              }}
+            />
+            <span>
+              Stay signed in
+              <span className="mt-1 block text-muted">On this browser, for 30 days. Leave it off to sign out when the browser closes.</span>
+            </span>
           </label>
           {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
           <button type="submit" disabled={busy} className="mt-4 h-12 w-full bg-cyan text-paper disabled:opacity-60">

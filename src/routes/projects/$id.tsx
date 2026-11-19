@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
+import { SuggestedDrawing } from "@/components/suggested-drawing";
 import {
   addDecision,
   deleteProject,
@@ -142,6 +143,7 @@ function ProjectPage() {
             <div className="tick mt-4">
               <span style={{ width: `${steps.length ? Math.round((data.checks.filter((stepId) => steps.some((step) => step.id === stepId)).length / steps.length) * 100) : 0}%` }} />
             </div>
+            <SuggestedDrawing brief={data.project.brief} constraints={data.project.constraints} title={data.project.title} />
 
             {tonight ? (
               <section className="mt-8 border border-ink bg-ink p-6 text-paper">
